@@ -6,3 +6,106 @@ $\cov(X_1, X_2) = -0.8$.
 Calculate the joint pdf of $X = (X_1, X_2)^T$.
 
 \noindent\rule{\textwidth}{.5pt}
+
+Let $X_i \sim N(\mu_i, \sigma^2_i)$, $1\leq i\leq d$ 
+be several univariate normal random variables.
+The joint PDF 
+$p: \mathbb{R}^{d\times 1} \to \mathbb{R}$ 
+of $\mathbf{x} = [x_1\ x_2\ \cdots\ x_d]^\T$ is the multivariate gaussian
+%
+\begin{equation}
+    p(\mathbf{x}) = 
+    \frac{1}
+    {
+        (2\pi)^{d/2}
+        |\bm\Sigma|^{1/2}
+    }
+    \times 
+    \exp\left[
+        -\frac{1}{2}
+        (\mathbf{x}-\bm\mu)^\T 
+        \bm\Sigma^{-1}
+        (\mathbf{x}-\bm\mu)
+    \right]
+\label{eq:gaussian}
+\end{equation}
+%
+with $\bm\mu = [\mu_1\ \mu_2\ \cdots\ \mu_d]^\T$
+and $\Sigma_{ij} = \sigma_{ij} = \cov(X_i, X_j)$ the covariance matrix of $\mathbf{x}$.
+
+The question statement gives 
+%
+\begin{equation}
+    \mu_1 = -2, \quad \sigma^2_1 = 2, \quad
+    \mu_2 = 1, \quad \sigma^2_2 = 4, \quad
+    \sigma_{12} = \sigma_{21} = -0.8
+\end{equation}
+%
+which leads to
+%
+\begin{align}
+    \bm\mu &= 
+    \begin{bmatrix}
+        -2 \\ 1
+    \end{bmatrix}
+    \\
+    \bm\Sigma &= 
+    \begin{bmatrix}
+        2    & -0.8 \\
+        -0.8 & 4
+    \end{bmatrix}, 
+    \quad
+    |\bm\Sigma| = 8-0.36 = 7.64, 
+    \quad
+    \bm\Sigma^{-1} = 
+    \frac{1}{7.64}
+    \begin{bmatrix}
+        4   & 0.8 \\
+        0.8 & 1
+    \end{bmatrix}
+\end{align}
+%
+and, making all substitutions in \eqref{eq:gaussian},
+%
+\begin{align}
+    p(\mathbf{x}) = 
+    \frac{1}{2\pi\sqrt{7.36}} \times
+    \exp\left[
+        -\frac{1}{2}
+        \begin{bmatrix}
+            x_1 + 2 \\
+            x_2 - 1
+        \end{bmatrix}^\T
+        \frac{1}{7.64}
+        \begin{bmatrix}
+            4   & 0.8 \\
+            0.8 & 1
+        \end{bmatrix}
+        \begin{bmatrix}
+            x_1 + 2 \\
+            x_2 - 1
+        \end{bmatrix}
+    \right].
+\end{align}
+
+\cref{fig:multivariate-gaussian} shows a plot of the multivariate distribution 
+given by the expression above.
+%
+\begin{figure}[hbp]
+    \centering 
+    \caption{Joint PDF of $X_1\sim N(-2, 2)$ and $X_2\sim N(1, 4)$.}
+    \label{fig:multivariate-gaussian}
+    \hfill
+    \begin{subfigure}{.45\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]
+        {../python_code/results/joint_pdf/multivariate_gaussian_elev30_azim60.png}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{.45\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]
+        {../python_code/results/joint_pdf/multivariate_gaussian_elev90_azim60.png}
+    \end{subfigure}
+    \hfill$\!$
+\end{figure}
