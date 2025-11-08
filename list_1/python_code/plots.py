@@ -45,7 +45,7 @@ def plot_multivariate_gaussian(
     ax.plot_surface(X1, X2, Z, cmap=cm.coolwarm, linewidth=0)
 
     # Save different view of the plot
-    for elev in [60, 90]:
+    for elev in [30, 90]:
         for azim in [60]:
             ax.view_init(elev=elev, azim=azim)
             if elev == 90:
