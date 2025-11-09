@@ -82,25 +82,25 @@ it is useful to rewrite the maximization problem in \eqref{eq:max} as
         C_{-1}, & g(x) < 0
     \end{cases},
     \quad
-    g(x) = 
-    \log \frac{p(x|C_{+1}) P(C_{+1})}
+    g(x) = g_B(x) =
+    \ln \frac{p(x|C_{+1}) P(C_{+1})}
               {p(x|C_{-1}) P(C_{-1})}
 \end{align}
 
-The function $g$, the discriminant of the classifier, is explicitly given by 
+The function $g_B$, the discriminant of the classifier, is explicitly given by 
 %
 \begin{align}
-    g(x) 
+    g_B(x)
     &=
-    \log \frac{p(x|C_{+1}) P(C_{+1})}
+    \ln \frac{p(x|C_{+1}) P(C_{+1})}
               {p(x|C_{-1}) P(C_{-1})} \\
     &=
-    \log[p(x|C_{+1})] + \log[P(C_{+1})]
-    -\log[p(x|C_{-1})] - \log[P(C_{-1})] \\
+    \ln[p(x|C_{+1})] + \ln[P(C_{+1})]
+    -\ln[p(x|C_{-1})] - \ln[P(C_{-1})] \\
     &=
     \begin{cases}
-        -\frac{1}{2}\log(2\pi) -\frac{1}{2}(x-2)^2 + \log(0.6) 
-        - \log(1/4) - \log(0.4), & |x|\leq 2 \\ 
+        -\frac{1}{2}\ln(2\pi) -\frac{1}{2}(x-2)^2 + \ln(0.6) 
+        - \ln(1/4) - \ln(0.4), & |x|\leq 2 \\ 
         \infty, & |x| > 2 
     \end{cases}
 \label{eq:discriminant}
@@ -114,9 +114,9 @@ $P(x|C_{-1}) = 1/4$, if $|x|\leq 2$, and
 $P(x|C_{-1}) = 0$, otherwise.
 %
 From \eqref{eq:discriminant}, one can deduce that the classifier decision boundary, i.e., the roots of the discriminant,
-is a single point $\delta = 2-\sqrt{\log(36/2\pi)}$; 
-$x > \delta$ or $x < -2$ are classified as $C_{+1}$, and 
-$-2 < x < \delta$ are classified as $C_{-1}$.
+is a single point $\delta_B = 2-\sqrt{\ln(36/2\pi)}$; 
+$x > \delta_B$ or $x < -2$ are classified as $C_{+1}$, and 
+$-2 < x < \delta_B$ are classified as $C_{-1}$.
 
 On $|x|\leq 2$, the error probability of this classifier can be calculated using \eqref{eq:error}:
 %
@@ -124,10 +124,10 @@ On $|x|\leq 2$, the error probability of this classifier can be calculated using
     P^B_\text{error} 
     = 
     0.6 
-    \int_{-2}^\delta \frac{1}{\sqrt{2\pi}} e^{-\frac{1}{2}(x-2)^2}\ dx
+    \int_{-2}^{\delta_B} \frac{1}{\sqrt{2\pi}} e^{-\frac{1}{2}(x-2)^2}\ dx
     +
     0.4 
-    \int_\delta^2 \frac{1}{4}\ dx
+    \int_{\delta_B}^2 \frac{1}{4}\ dx
     =
     0.1880\dots
 \end{align}
@@ -139,17 +139,17 @@ Indeed, taking
 \begin{equation}
     g(x) = g_\text{ML}(x)
     =
-    \log \frac{p(x|C_{+1})}
+    \ln \frac{p(x|C_{+1})}
               {p(x|C_{-1})}
     =
     \begin{cases}
-        -\frac{1}{2}\log(2\pi) -\frac{1}{2}(x-2)^2  
-        - \log(1/4), & |x|\leq 2 \\ 
+        -\frac{1}{2}\ln(2\pi) -\frac{1}{2}(x-2)^2  
+        - \ln(1/4), & |x|\leq 2 \\ 
         \infty, & |x| > 2 
     \end{cases}
 \end{equation}
 %
-nudges the threshold to $\delta_\text{ML} = 2-\sqrt{\log(16/2\pi)}$ and result in sligthly higher error probability:
+nudges the threshold to $\delta_\text{ML} = 2-\sqrt{\ln(16/2\pi)}$ and result in sligthly higher error probability:
 %
 \begin{align}
     P^\text{ML}_\text{error} 
