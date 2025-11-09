@@ -1,15 +1,15 @@
 \section{Question 5}
 Consider the dataset of 3000 bivariate, labeled samples in \texttt{data.csv} file. 
-Firstly, split thedataset into training (70\%) and test set (30\%).
+Firstly, split the dataset into training (70\%) and test set (30\%).
 
 \subsection{Item a}
 Assume the samples labeled with ``$+1$'' are drawn by a bivariate gaussian density 
 with parameters $\mu_{+1}$, $\Sigma_{+1}$, while the samples labeled with ``$-1$'' 
-are drawn by another gaussiandensity with parameters $\mu_{-1}$, $\Sigma_{-1}$. 
+are drawn by another gaussian density with parameters $\mu_{-1}$, $\Sigma_{-1}$. 
 The prior probabilities $P(C_{+1})$ and $P(C_{-1})$ are unknown as well. 
 Estimate the missing parameters (with the training set), 
-present the discriminantfunctions of the Bayes classifier (MAP criterion) 
-and evaluate its performance(accuracy, precision, recall) over the test set.
+present the discriminant functions of the Bayes classifier (MAP criterion) 
+and evaluate its performance (accuracy, precision, recall) over the test set.
 Comment all your results.
 
 \subsection{Item b}
@@ -17,3 +17,219 @@ Calculate the decision boundary and plot it on a graph with the samples of the t
 Comment your results.
 
 \noindent\rule{\textwidth}{.5pt}
+
+The dataset in \texttt{data.csv} consists of three columns, 
+two for the features and one for the label. 
+In the following, the first feature's value is called $x_1$, and the second, $x_2$.
+%
+Since the classifier will be selecting one of two classes for each sample given to it,
+it is a dichotomizer, and in particular performance will be measured with respect to class $+1$.
+
+A first step in creating the dichotomizer is readying the data. 
+Pre-processing actions like shuffling samples and normalizing features 
+are common before making the train-test (or train-validation-test) split. 
+%
+Since the features have relatively small ranges and the Bayesian classifier uses data as-is,
+normalizing is not necessary.
+%
+As for if shuffling is desirable can be easily determined visually from the data distribution,
+since the number of features is small. 
+\Cref{fig:shuffling} shows how shuffling affects the original data and the 70\%-30\% train-test split.
+%
+\begin{figure}[hb]
+    \centering
+    \caption{Effects of shuffling and resulting data split. Seed: 242104677.}
+    \begin{subfigure}{.49\textwidth}
+        \centering
+        \caption{Shuffling effects on data and split.}
+        \label{fig:shuffling}
+        \includegraphics[width=\linewidth]{../../python_code/results/bivariate_classifier/shuffling_effect.png}
+    \end{subfigure}
+    %
+    \begin{subfigure}{.49\textwidth}
+        \centering
+        \caption{Train-test split.}
+        \label{fig:split}
+        \includegraphics[width=\linewidth]{../../python_code/results/bivariate_classifier/split.png}
+    \end{subfigure}
+\end{figure}
+
+The clustering of dark blue points in the original data indicates that 
+label $+1$ tended to happen more frequently towards the end of the dataset.
+As such, splitting the data without shuffling would likely skew the prior of the training portion,
+biasing the classification process%
+\footnote{%
+    The discussion on the classifier's results present at the end of this answer shows that 
+    using the original data leads to one more misclassification than using the shuffled data.
+}.
+Therefore, shuffling the samples before the split is adequate.
+\Cref{fig:split} shows the split applied on the shuffled samples to obtain the train and test sets.
+
+For the dichotomizer to work, classes priors and likelihoods must be known.
+Since they aren't, estimation is required.
+%
+Given that the likelihoods are gaussian by hypothesis, 
+this means estimating each class' mean and covariance.
+%
+Let
+%
+\begin{multicols}{2}
+    \begin{itemize}
+        \item $P(C_{+1})$ be the prior of $C_{+1}$;
+        \item $\bm\mu_{+1}$ be the average of $C_{+1}$;
+        \item $\bm\Sigma_{+1}$ be the covariance of $C_{+1}$;
+        \item $P(C_{-1})$ be the prior of $C_{-1}$;
+        \item $\bm\mu_{-1}$ be the average of $C_{-1}$;
+        \item $\bm\Sigma_{-1}$ be the covariance of $C_{-1}$;
+    \end{itemize}
+\end{multicols}
+%
+then, using the convention that a hat indicates an estimator,
+%
+\begin{align}
+    \widehat{P}(C_i) &= 
+        \frac{N_i}
+             {N_{+1} + N_{-1}} 
+\label{eq:prior}\\
+    \widehat{\bm{\mu}}_i &= 
+        \frac{1}{N_i}
+        \sum_{n=1}^{N_i} \mathbf{x}^n_i \\  
+    \widehat{\bm\Sigma}_i &= 
+        \frac{1}{N_i - 1} 
+        \sum_{n=1}^{N_i} 
+            (\mathbf{x}^n_i - \widehat{\bm\mu}_i)
+            (\mathbf{x}^n_i - \widehat{\bm\mu}_i)^\top 
+\label{eq:cov}
+\end{align}
+%
+where 
+$i$ indexes a class,
+$N_i$ is the number of instances of class $i$ in the training set, and
+$\mathbf{x}^n_i \in \mathbb{R}^{2\times 1}$ is the $n$-th sample of class $i$ in the training set.
+%
+Applying eqs. \eqref{eq:prior}-\eqref{eq:cov} on the training data, 
+the following values were obtained.
+\Cref{fig:estimators} shows what the estimators look like on top of the training data 
+(ellipses encompass three standard deviations).
+%
+\begin{figure}[hbp]
+    \centering
+    \caption{Average and covariance estimators fit on training data.}
+    \label{fig:estimators}
+    \includegraphics[width=7cm]{../../python_code/results/bivariate_classifier/parameters_estimates.png}
+\end{figure}
+
+With the prior and likelihoods at hand, defining a discriminant is straightforward.
+Of the common formulations, the is chosen the log-ratio of the likelihood-prior products,
+since there are only two classes and they're both gaussian:
+%
+\begin{align}
+    g(\mathbf{x}) 
+    &= 
+    \log\frac{P(C_{+1} | \mathbf{x})}
+            {P(C_{-1} | \mathbf{x})} \\
+    &= 
+    \log\frac{p(\mathbf{x} | C_{+1})}
+            {p(\mathbf{x} | C_{-1})} \\
+    &=
+    -\frac{1}{2}
+        (|\widehat{\bm\Sigma}_{+1}| - |\widehat{\bm\Sigma}_{-1}|)
+    -\frac{1}{2}
+        (\mathbf{x} - \widehat{\bm\mu}_{+1})^\top \widehat{\bm\Sigma}^{-1}_{+1}
+        (\mathbf{x} - \widehat{\bm\mu}_{+1}) \nonumber\\
+    &\qquad\qquad\qquad\qquad\quad\,\,\,\,\,
+        +\frac{1}{2}
+        (\mathbf{x} - \widehat{\bm\mu}_{-1})^\top \widehat{\bm\Sigma}^{-1}_{-1}
+        (\mathbf{x} - \widehat{\bm\mu}_{-1})
+    + \log
+        \frac{\widehat{P}(C_{+1})}
+                {\widehat{P}(C_{-1})}
+\end{align}
+
+Class $+1$ is assigned if $g(\mathbf{x})>0$, and $-1$ otherwise.
+The dichotomizer thus operates as indicated in the flowchart of \cref{fig:flowchart};
+there, $\mathbf{x}$ is assumed to be a sample from the test set.
+%
+\begin{figure}[hbp]
+    \centering
+    \caption{Flowchart of the multivariate MAP classifier.}
+    \label{fig:flowchart}
+    \input{figures/flowchart.tex}
+\end{figure}
+
+\Cref{fig:results} shows the results obtained in testing. 
+The red rectangle highlights the area in feature space where all misclassifications occurred.
+These are all false positives (i.e., $C_{+1}$ was assigned to sample of class $C_{-1}$).
+Remarkably, there were no false negatives, i.e., all $C_{-1}$ assignments were true.
+%
+\begin{figure}[hbp]
+    \centering
+    \caption{Classifications using test data from shuffled dataset.}
+    \label{fig:results}
+    \includegraphics[width=\textwidth]{../../python_code/results/bivariate_classifier/test_errors.png}
+\end{figure}
+
+\Cref{tab:results} exhibits three performance metrics for the classifier,
+precision, accuracy, and recall, obtained using two different datasets:
+the original one, and the shuffled one.
+%
+As expected from the discussion at the beginning of this answer, 
+shuffling improves results (in this case, the precision and the accuracy), albeit only slightly.
+
+\begin{table}[htb]
+    \centering
+    \begin{threeparttable}
+        \centering
+        \caption{
+            Precision, accuracy and recall of the classifier 
+            with and without shuffling samples. 
+        }
+        \label{tab:results}
+        \begin{tabular}{c ccc}
+        \toprule
+            \multirow{2}{*}{Dataset} & Precision & Accuracy & Recall \\
+        \cmidrule{2-4}
+            & 
+            $\frac{\text{TP} + \text{TN}}
+                {\text{TP} + \text{TN} + \text{FP} + \text{FN}}$ &
+            $\frac{\text{TP}}
+                {\text{TP} + \text{FP}}$ &
+            $\frac{\text{TP}}
+                {\text{TP} + \text{FN}}$ \\
+        \midrule
+            Original & 99.22\% & 98.89\% & 100.00\% \\
+            Shuffled & 99.33\% & 99.05\% & 100.00\% \\
+        \bottomrule 
+        \end{tabular}
+        %
+        \begin{tablenotes}
+            \item TP: True Positives, TN: True Negatives,
+            \item FP: False Positives, FN: False Negatives
+        \end{tablenotes}
+    \end{threeparttable}
+\end{table}
+
+Looking at the roots of $g$ in \cref{fig:boundary},
+the reason behind the misclassifications becomes clear:
+some points from class $-1$ had high enough deviation 
+in the direction to cross the classification boundary.
+%
+\begin{figure}[h]
+    \centering
+    \caption{Boundary of the MAP classifier.}
+    \label{fig:boundary}
+    \includegraphics[width=\textwidth]{../../python_code/results/bivariate_classifier/boundary.png}
+\end{figure}
+
+Since these points fall well within class' $+1$ cluster, 
+it would be difficult for any classifier to correctly handle them,
+particularly classifiers with convex, smooth boundaries.
+%
+However, given the shapes and orientations of the train distributions, the boundary observed above seems reasonable.
+Moreover, the classifier showed good performance results, proving itself useful during the test.
+While whether the classifier would still present good results with further data is unknown, 
+it is fair to say that, should bad results appear,
+one should consider flaws in the sampling process 
+(noise, distributions different than the ones obsreved before, etc)
+as much as flaws on the classifier design
+(e.g., change criterion, change parameter estimators, chage hypothesis on the shape of likelihoods).

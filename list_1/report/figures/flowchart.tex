@@ -1,0 +1,17 @@
+\begin{tikzpicture}[> = latex]
+    % Blocks
+    \node [startstop] (start) at (0, 0) {Start};
+    \node [io, right=1 of start] (1) {Receive $\mathbf{x}$};
+    \node [decision, right=1 of 1] (2) {$g(\mathbf{x}) > 0$ ?};
+    \node [process, right=1 of 2] (3) {Assign $C_{+1}$};
+    \node [process, below=1 of 2] (4) {Assign $C_{-1}$};
+    \node [startstop, right=1 of 3] (stop) {Stop};
+
+    % Arrows
+    \draw [->] (start) -- (1);
+    \draw [->] (1) -- (2);
+    \draw [->] (2) -- (3);
+    \draw [->] (2) -- (4);
+    \draw [->] (3) -- (stop);
+    \draw [->] (4) -| (stop);
+\end{tikzpicture}
