@@ -442,7 +442,8 @@ def plot_best_weights(
     sns.clustermap(
         pd.DataFrame(dict(zip(features, w)), index=[0]),
         annot=True,
-        figsize=(10, 3),
+        figsize=(10, 2.75),
+        cmap="coolwarm",
         # Disabling clustermap goodies since we're just interested in the heatmap
         row_cluster=False,
         col_cluster=False,
@@ -453,13 +454,59 @@ def plot_best_weights(
     )
     plt.xticks(rotation=45, ha="right", fontsize=15)
     if save_fig:
-        output_folder = f"./results/multivariate_linear_regression/{reference_realization.removesuffix(".mat")}/"
-        os.makedirs(output_folder, exist_ok=True)
+        output_folder = f"./python_code/results/multivariate_linear_regression/{reference_realization.removesuffix(".mat")}/"
         plt.savefig(
             output_folder + "best_weights.pdf",
             bbox_inches="tight",
             pad_inches=0,
         )
+    plt.close()
+
+
+def plot_oil_production_rates(
+    case_study: str = "./python_code/data/multivariate_linear_regression/EGG/",
+    train_split: float = 0.5,
+    validation_split: float = 0.25,
+    target_feature: str = "WOPR_PROD1",
+) -> None:
+    from scipy.io import loadmat
+
+    def load_opr(mat_file: str) -> pd.DataFrame:
+
+        def _is_opr(key: str) -> bool:
+            """True if attribute refers to OPR, False if not"""
+            return "YEARS" in key or "OPR_PROD" in key
+
+        # Loads data from selected realization
+        return pd.DataFrame(  # val is a single-value array so must be indexed
+            {key: val[0] for key, val in loadmat(mat_file).items() if _is_opr(key)}
+        )
+
+    realizations = sorted(
+        [mat for mat in os.listdir(case_study) if mat.endswith(".mat")],
+        key=lambda x: int(x.removesuffix(".mat").removeprefix("EGG")),
+    )
+    ensemble = [case_study + mat for mat in realizations]
+    oil_rates = [load_opr(e) for e in ensemble]
+    _, ax = plt.subplots(nrows=1, ncols=1)
+
+    for r, opr in zip(realizations, oil_rates):
+        label = os.path.basename(r).removesuffix(".mat")
+        ax.plot(opr["YEARS"], opr[target_feature], label=label)
+
+    years = oil_rates[0]["YEARS"]
+    val_idx = int(train_split * len(years))
+    test_idx = val_idx + int(validation_split * len(years))
+    ax.axvline(x=years[val_idx], color="tab:gray", linestyle="dashed")
+    ax.axvline(x=years[test_idx], color="tab:gray", linestyle="dashed")
+
+    ax.legend(loc="upper right")
+    ax.grid(True)
+    ax.set_xlabel("Time (years)")
+    ax.set_ylabel(target_feature[1:].replace("_", " ") + " (m$^3$/day)")
+
+    root = f"./python_code/results/multivariate_linear_regression/"
+    plt.savefig(root + "oil_production_rates.pdf", bbox_inches="tight", pad_inches=0)
     plt.close()
 
 
@@ -474,7 +521,7 @@ def plot_regressions(
     years: np.ndarray,
     target_feature: str,
     save_fig: bool = True,
-):
+) -> None:
     _, ax = plt.subplots(nrows=1, ncols=1)
 
     # Ensemble regression (except realization of best validation)
@@ -482,18 +529,10 @@ def plot_regressions(
         ax.plot(years, p, color="tab:gray", alpha=0.2)
 
     ax.plot(
-        years,
-        r,
-        color="tab:blue",
-        label=reference_realization.removesuffix(".mat"),
-        alpha=0.8,
+        years, r, color="tab:blue", label=reference_realization.removesuffix(".mat")
     )
     ax.plot(
-        years,
-        best_fit,
-        color="tab:red",
-        label=best_realization.removesuffix(".mat"),
-        alpha=0.8,
+        years, best_fit, color="tab:red", label=best_realization.removesuffix(".mat")
     )
 
     # Vertical lines indicating where each period/datasets end
@@ -502,13 +541,9 @@ def plot_regressions(
 
     ax.legend(loc="lower left")
     ax.grid(True)
-    ax.set_title("Regression results")
-    ax.set_xlabel("Time (years)")
-    ax.set_ylabel(target_feature.replace("_", " ") + " (normalized units)")
 
     if save_fig:
-        output_folder = f"./results/multivariate_linear_regression/{reference_realization.removesuffix(".mat")}/"
-        os.makedirs(output_folder, exist_ok=True)
+        output_folder = f"./python_code/results/multivariate_linear_regression/{reference_realization.removesuffix(".mat")}/"
         plt.savefig(
             output_folder + "regressions.pdf", bbox_inches="tight", pad_inches=0
         )
@@ -516,4 +551,5 @@ def plot_regressions(
 
 
 if __name__ == "__main__":
-    plot_multivariate_gaussian()
+    # plot_multivariate_gaussian()
+    plot_oil_production_rates()

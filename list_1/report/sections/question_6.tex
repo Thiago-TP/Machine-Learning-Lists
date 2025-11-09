@@ -5,3 +5,231 @@ You may use a validation set to train models with different subsets of features 
 Then, use a test set to report and comment the final model results.
 
 \noindent\rule{\textwidth}{.5pt}
+
+Multivariate linear regression (MLR) attempts to predict (model) 
+an outcome $r\in\mathbb{R}$ using a series of features $x_i$, $1\leq i\leq d$,
+in some way correlated with $r$ so that 
+%
+\begin{equation}
+    w_0 + w_1x_1 + \cdots + w_d x_d = r,
+\label{eq:regression}
+\end{equation}
+
+where $w_i$, $0\leq i\leq d$, are entries of a weight vector 
+$\mathbf{w}\in\mathbb{R}^{(d+1)\times 1}$.
+Given that $r$ often comes from measured real-life phenomena,
+regression rarely gives a perfect fit of data.
+%
+Note that eq. \eqref{eq:regression} can be expressed as the dot product between 
+the weight vector $\mathbf{w}$ and the sample $\mathbf{x} = [1,\ x_1,\ x_2,\ \dots, x_d]$.
+
+If there are $t$ instances of $r$, so that $\mathbf{r} = [r_1,\ r_2,\ \dots, r_t]^\T$,
+then MLR uses $t$ instances of $\mathbf{x}$, 
+assemblying a matrix 
+$\mathbf{X} = [\mathbf{x}_1,\ \mathbf{x}_2,\ \dots,\ \mathbf{x}_t]^\T$
+so that
+%
+\begin{equation}
+    \mathbf{X} \mathbf{w} = \mathbf{r}.
+\label{eq:vec_regression}
+\end{equation}
+
+In these terms, it is possible to show that the weight vector 
+that minimizes the square error of the regression is given by 
+%
+\begin{equation}
+    \mathbf{w}_\text{LS} = 
+    (\mathbf{X}^\T \mathbf{X})^{-1} 
+    \mathbf{X}^\T \mathbf{r}.
+\label{eq:wls}
+\end{equation}
+
+Put simply, MLR finds the best linear combination between a set of features and an outcome.
+Thus, the weaker the linear relationship, the poorer the regression.
+As to what may weaken the linearity, there are two main culprits:
+noise on $\mathbf{r}$, and non-representative data in $\mathbf{X}$.
+
+Validation is a process that attempts to remove bias introduced in $\mathbf{w}_\text{LS}$ 
+from using a poor or inadequate set of features $\mathbf{X}$ in the regression.
+%
+In it, several subsets of features $\mathbf{X}_s$, $1\leq s\leq S$, 
+are used to generate one weight vector $\mathbf{w}^s_\text{LS}$ each through eq. \eqref{eq:wls};
+then, through eq. \eqref{eq:vec_regression}, 
+each vector is applied on a \textit{validation set} $\mathbf{X}_V$.
+%
+The vector with smallest validation error associated is chosen to proceed to testing, i.e.,
+$\mathbf{X}_T \mathbf{w}^*$ is compared to $\mathbf{r}_T$, with
+$\mathbf{w}^* = 
+\argmin_{\mathbf{w}^s_\text{LS}} 
+\lVert 
+    \mathbf{X}_V \mathbf{w}^s_\text{LS} - \mathbf{r}_V
+\rVert_2$.
+Here, $\mathbf{r}_V$ and $\mathbf{r}_T$ are the outcomes 
+observed in the validation and test sets, respectively.
+%
+If we see the generation of weight vectors using sets $\mathbf{X}_s$ as training the regressor,
+then validation tries to reduce test error by introducing new data into the process, 
+i.e., data different than that of training. 
+
+The application chosen for the implementation of MLR with validation is 
+the prediction of oil production rate in a well given the oil and water production rates (m$^3$ per day) in the remaining producing wells.
+%
+The case study considered is the Egg model, a two-fase (oil and water) synthetic reservoir 
+commonly used in prototyping reservoir control strategies.
+%
+It has over 60,000 active 60$\times$60$\times$7 m cells, 
+4 producing wells, 8 injector wells, and 100 different realizations.
+%
+In the context of reservoir engineering, 
+a realization is a numerical model of a reservoir;
+differences in the configurations of each realization (e.g., porosity and permeability at each cell)
+serve to capture the uncertainties of the reference reservoir,
+and for that reason they are often used in forecasting.
+%
+See \cref{fig:realizations} for a view of the realizations used in this implementation 
+(11 of the original 100).
+The targeted well is labeled ``PROD1''.
+%
+\begin{figure}[hb]
+    \centering
+    \caption{Egg model realizations used.}
+    \label{fig:realizations}
+    % \includegraphics[width=5cm]{../../python_code/results/multivariate_linear_regression/}
+\end{figure}
+
+In further detail, $\mathbf{r}$ will correspond to the oil production rate at a given well in a realization of reference,
+and features $x_1$, $x_2$, etc., will be the oil and water production rates at the remaining wells. 
+%
+Of the $S=10$ remaining realizations (the original 11 minus the one where $\mathbf{r}$ comes from),
+one weight vector will be extracted using \eqref{eq:wls}, and then validated.
+The resulting selection of the validation will then be tested.
+
+Since $\mathbf{r}$ is a time series, samples can't be shuffled.
+However, as we wish to evaluate the influence of the other producing wells on PROD1,
+and weights scale with their associated attributes, 
+features will be normalized (i.e., centered at zero and divided by their standard deviations)
+and $w_0$ will be fixed at 0%
+\footnote{
+    Mathematically, this is assuming whatever portion of $r$ can't be explained by the features is noise.
+}.
+
+\Cref{fig:OPRs} shows the oil production rate at PROD1 for all 11 realizations used.
+Times series consist of 120 measurements taken every 30 days, generating nearly 10 years of reservoir life.
+Training starts at year 0 and ends at year 5 (50\% split);
+validation starts at year 5 and ends at year 7.5 (25\% split);
+testing starts at year 7.5 and covers the remainder of reservoir life (25\% split). 
+%
+\begin{figure}[hb]
+    \centering
+    \caption{Oil production rate at PROD1 of realizations used.}
+    \label{fig:OPRs}
+    \includegraphics[width=7cm]{../../python_code/results/multivariate_linear_regression/oil_production_rates.pdf}
+\end{figure}
+
+Reservoirs have complex dynamics that discourage the use of linear regressors, 
+but MLR's simplicity and ease of interpretability makes it a promising tool for gaining
+insight on well-on-well interference.
+
+\Cref{fig:regressions} shows the regressions obtained using the validation step 
+considering different realizations as reference (the well, though, is always PROD1).
+Target realizations are highlighted in blue, and best regressions, in red.
+%
+Interestingly, realizations with poorer training results 
+occasionally manage to have good or even the best validation results, 
+while good training results do not necessarily guarantee good validation results.
+\begin{figure}[hb]
+    \centering
+    \caption{Best regressions and weights across different references. Normalized units.}
+    \label{fig:regressions}
+    \begin{subfigure}{.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../../python_code/results/multivariate_linear_regression/EGG1/regressions.pdf}
+    \end{subfigure}
+    \begin{subfigure}{.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../../python_code/results/multivariate_linear_regression/EGG2/regressions.pdf}
+    \end{subfigure}
+    \begin{subfigure}{.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../../python_code/results/multivariate_linear_regression/EGG3/regressions.pdf}
+    \end{subfigure}
+    \begin{subfigure}{.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../../python_code/results/multivariate_linear_regression/EGG1/best_weights.pdf}
+    \end{subfigure}
+    \begin{subfigure}{.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../../python_code/results/multivariate_linear_regression/EGG2/best_weights.pdf}
+    \end{subfigure}
+    \begin{subfigure}{.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../../python_code/results/multivariate_linear_regression/EGG3/best_weights.pdf}
+    \end{subfigure}
+    %
+    \begin{subfigure}{.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../../python_code/results/multivariate_linear_regression/EGG4/regressions.pdf}
+    \end{subfigure}
+    \begin{subfigure}{.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../../python_code/results/multivariate_linear_regression/EGG5/regressions.pdf}
+    \end{subfigure}
+    \begin{subfigure}{.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../../python_code/results/multivariate_linear_regression/EGG6/regressions.pdf}
+    \end{subfigure}
+    \begin{subfigure}{.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../../python_code/results/multivariate_linear_regression/EGG4/best_weights.pdf}
+    \end{subfigure}
+    \begin{subfigure}{.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../../python_code/results/multivariate_linear_regression/EGG5/best_weights.pdf}
+    \end{subfigure}
+    \begin{subfigure}{.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../../python_code/results/multivariate_linear_regression/EGG6/best_weights.pdf}
+    \end{subfigure}
+    %
+    \begin{subfigure}{.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../../python_code/results/multivariate_linear_regression/EGG7/regressions.pdf}
+    \end{subfigure}
+    \begin{subfigure}{.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../../python_code/results/multivariate_linear_regression/EGG8/regressions.pdf}
+    \end{subfigure}
+    \begin{subfigure}{.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../../python_code/results/multivariate_linear_regression/EGG9/regressions.pdf}
+    \end{subfigure}
+    \begin{subfigure}{.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../../python_code/results/multivariate_linear_regression/EGG7/best_weights.pdf}
+    \end{subfigure}
+    \begin{subfigure}{.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../../python_code/results/multivariate_linear_regression/EGG8/best_weights.pdf}
+    \end{subfigure}
+    \begin{subfigure}{.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../../python_code/results/multivariate_linear_regression/EGG9/best_weights.pdf}
+    \end{subfigure}
+    %
+    \begin{subfigure}{.49\textwidth}
+        \centering
+        \includegraphics[width=.66\linewidth]{../../python_code/results/multivariate_linear_regression/EGG10/regressions.pdf}
+    \end{subfigure}
+    \begin{subfigure}{.49\textwidth}
+        \centering
+        \includegraphics[width=.66\linewidth]{../../python_code/results/multivariate_linear_regression/EGG11/regressions.pdf}
+    \end{subfigure}
+    \begin{subfigure}{.49\textwidth}
+        \centering
+        \includegraphics[width=.66\linewidth]{../../python_code/results/multivariate_linear_regression/EGG10/best_weights.pdf}
+    \end{subfigure}
+    \begin{subfigure}{.49\textwidth}
+        \centering
+        \includegraphics[width=.66\linewidth]{../../python_code/results/multivariate_linear_regression/EGG11/best_weights.pdf}
+    \end{subfigure}
+\end{figure}
