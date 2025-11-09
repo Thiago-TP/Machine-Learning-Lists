@@ -9,17 +9,17 @@
         \draw (\x, 0) node [below] {$\x$};
     }
     % p(x|C+1)
-    \draw [thick, blue!50] 
+    \draw [thick, blue!75] 
         plot (\x, {\yScale * 0.39894 * exp(-0.5 * (\x-2) * (\x-2))})
         (2, \yScale * 0.39894) node [above] {$p(x|C_{+1})$};
     % p(x|C-1)
     \def\deltaML{1.033} % 
-    \draw [thick, red!50] 
+    \draw [thick, red!75] 
         (-2, \yScale * 1/4) node [above] {$p(x|C_{-1})$} --++ (4, 0)
         (2, 0) -- (4.5, 0)
         (-2, 0) -- (-2.5, 0)
     ;
-    \fill [red!50]
+    \fill [red!75]
         (-2, \yScale * 1/4) circle (\r)
         (2, \yScale * 1/4) circle (\r)
         (-2, 0) circle (\r)
@@ -44,16 +44,16 @@
             \draw (\x, 0) node [below] {$\x$};
         }
         % p(x|C+1)
-        \draw [thick, blue!50] 
+        \draw [thick, blue!75] 
             plot (\x, {\yScale * \priorOne * 0.39894 * exp(-0.5 * (\x-2) * (\x-2))})
             (2, \yScale * \priorOne * 0.39894) node [above] {$P(C_{+1}) p(x|C_{+1})$};
         % p(x|C-1)
-        \draw [thick, red!50] 
+        \draw [thick, red!75] 
             (-2, \yScale * \priorMinusOne * 1/4) node [above] {$P(C_{-1}) p(x|C_{-1})$} --++ (4, 0)
             (2, 0) -- (4.5, 0)
             (-2, 0) -- (-2.5, 0)
         ;
-        \fill [red!50]
+        \fill [red!75]
             (-2, \yScale * \priorMinusOne * 1/4) circle (\r)
             (2, \yScale * \priorMinusOne * 1/4) circle (\r)
             (-2, 0) circle (\r)
