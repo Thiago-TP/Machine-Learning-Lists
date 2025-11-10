@@ -76,9 +76,9 @@ def load_data(
     )
 
     years = data.pop("YEARS").to_numpy()
-    features = data.columns.to_numpy()
     data = (data - data.mean()) / data.std()  # normalization of features
     r = data.pop(r_label).to_numpy()
+    features = data.columns.to_numpy()
     samples = data.to_numpy()
 
     if is_case_study:

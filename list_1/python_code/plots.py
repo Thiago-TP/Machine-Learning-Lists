@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse, Rectangle
 from matplotlib.colors import ListedColormap
 
-CMAP_CLASS = ListedColormap(["tab:blue", "tab:orange"])
+CMAP_CLASS = ListedColormap(["tab:blue", "tab:red"])
 
 
 def plot_multivariate_gaussian(
@@ -69,7 +69,10 @@ def plot_shuffling_effect(
     proportion: float = 0.7,
 ) -> None:
     """Plots: original and shuffled datasets"""
-    _, axs = plt.subplots(nrows=2, ncols=2, figsize=(12, 12), sharex=True, sharey=True)
+    fig, axs = plt.subplots(
+        nrows=2, ncols=2, figsize=(12, 12), sharex=True, sharey=True
+    )
+
     for ax, split, label in zip(
         axs.flatten()[:2],
         (original_samples, shuffled_samples),
@@ -79,7 +82,7 @@ def plot_shuffling_effect(
         split.iloc[: int(proportion * split.shape[0]), :].plot.scatter(
             x="x1",
             y="x2",
-            c="orange",
+            c="tab:purple",
             title=f"{label} Set, {split.shape[0]} samples (100.00%)",
             ax=ax,
             grid=True,
@@ -90,7 +93,7 @@ def plot_shuffling_effect(
         split.iloc[int(proportion * split.shape[0]) :, :].plot.scatter(
             x="x1",
             y="x2",
-            c="tab:red",
+            c="pink",
             ax=ax,
             grid=True,
             alpha=0.7,
@@ -104,7 +107,7 @@ def plot_shuffling_effect(
         split.plot.scatter(
             x="x1",
             y="x2",
-            colormap="Blues",
+            colormap="Grays",
             c="original index",
             colorbar=False,
             ax=ax,
@@ -301,7 +304,7 @@ def plot_test_errors(
     errors[errors["class"] == 1].plot.scatter(
         x="x1",
         y="x2",
-        color="tab:orange",
+        color="tab:red",
         ax=axs[2],
         grid=True,
         alpha=0.7,
@@ -410,7 +413,7 @@ def plot_boundary(
             X1, X2, boundary, levels=[-1e9, 0], colors=["lightblue"], alpha=0.1
         )  # class -1 chosen
         ax.contourf(
-            X1, X2, boundary, levels=[0, 1e9], colors=["gold"], alpha=0.1
+            X1, X2, boundary, levels=[0, 1e9], colors=["pink"], alpha=0.2
         )  # class +1 chosen
 
         ax.legend(loc="lower left")
@@ -439,11 +442,15 @@ def plot_best_weights(
     features: np.ndarray,
     save_fig: bool = True,
 ):
+    names = [f.removeprefix("W").replace("_", " ") for f in features]
     sns.clustermap(
-        pd.DataFrame(dict(zip(features, w)), index=[0]),
+        pd.DataFrame(dict(zip(names, w)), index=[0]),
         annot=True,
-        figsize=(10, 2.75),
+        annot_kws={"size": 24, "weight": "bold"},
+        figsize=(10, 2),
         cmap="coolwarm",
+        vmin=-2,
+        vmax=3.5,
         # Disabling clustermap goodies since we're just interested in the heatmap
         row_cluster=False,
         col_cluster=False,
@@ -452,7 +459,7 @@ def plot_best_weights(
         xticklabels=True,
         yticklabels=False,
     )
-    plt.xticks(rotation=45, ha="right", fontsize=15)
+    plt.xticks(rotation=45, ha="right", fontsize=20)
     if save_fig:
         output_folder = f"./python_code/results/multivariate_linear_regression/{reference_realization.removesuffix(".mat")}/"
         plt.savefig(
@@ -551,5 +558,5 @@ def plot_regressions(
 
 
 if __name__ == "__main__":
-    # plot_multivariate_gaussian()
+    plot_multivariate_gaussian()
     plot_oil_production_rates()
