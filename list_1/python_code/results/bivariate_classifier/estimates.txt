@@ -1,0 +1,20 @@
+Prior estimates:
+class
+-1    0.301905
+ 1    0.698095
+Name: proportion, dtype: float64
+
+Mean estimates:
+             x1        x2
+class                    
+-1     0.529735  2.409637
+ 1     6.011903 -3.970944
+
+Covariance estimates:
+                x1        x2
+class                       
+-1    x1  3.721017 -1.876782
+      x2 -1.876782  9.446730
+ 1    x1  0.950884  0.937032
+      x2  0.937032  4.012611
+

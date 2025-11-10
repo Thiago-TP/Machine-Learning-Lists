@@ -63,7 +63,7 @@ def main(
 
 
 def load_data(
-    mat_file: str, r_label: str, is_case_study: bool = False
+    mat_file: str, r_label: str, is_case_study: bool = False, normalize: bool = True
 ) -> np.ndarray | tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
 
     def _is_well_data(key: str) -> bool:
@@ -76,9 +76,9 @@ def load_data(
     )
 
     years = data.pop("YEARS").to_numpy()
-    features = data.columns.to_numpy()
     data = (data - data.mean()) / data.std()  # normalization of features
     r = data.pop(r_label).to_numpy()
+    features = data.columns.to_numpy()
     samples = data.to_numpy()
 
     if is_case_study:
@@ -97,8 +97,7 @@ def train(samples: np.ndarray, reference: np.ndarray, val_idx: int):
 
 if __name__ == "__main__":
     args = {
-        "case_study": "./data/EGG/",
-        # "reference_realization": "EGG11.mat", # standard
+        "case_study": "./python_code/data/multivariate_linear_regression/EGG/",
         "r_label": "WOPR_PROD1",
         "train_split": 0.5,
         "validation_split": 0.25,
