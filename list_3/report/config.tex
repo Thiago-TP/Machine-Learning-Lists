@@ -1,0 +1,99 @@
+% Report's condifguration and formatting file.
+% All packages should be loaded here, all commands should be defined here.
+
+\usepackage{multirow}
+\usepackage{threeparttable}
+\usepackage{booktabs}
+
+\usepackage[margin=3cm]{geometry}
+
+\usepackage[scaled]{helvet}
+
+\usepackage{indentfirst}
+
+\usepackage{multicol}
+\usepackage{enumitem}
+    \setlist{itemsep=0pt}
+
+\usepackage{amsmath}
+    \newcommand{\argmin}{\mathop{\mathrm{argmin}}\limits}
+    \newcommand{\argmax}{\mathop{\mathrm{argmax}}\limits}
+    \DeclareMathOperator{\E}{\mathrm{E}}
+    \DeclareMathOperator{\var}{\ensuremath{\sigma^2}}
+    \DeclareMathOperator{\cov}{\mathrm{cov}}
+    \newcommand{\T}{\top}
+\usepackage{amssymb}
+\usepackage{bm}
+
+\usepackage{titlesec}
+    \titleformat{\section}{\sffamily\bfseries}{$\blacktriangleright$}{1em}{}
+    \titleformat{\subsection}{\sffamily\bfseries}{$\triangleright$}{1em}{}
+
+
+\usepackage{graphicx}
+    \graphicspath{{figures/}}
+\usepackage{wrapfig}
+
+\usepackage{caption, subcaption}
+
+\usepackage{fancyhdr}
+    \fancyhead[l]{Thiago Tomás de Paula}
+    \fancyhead[c]{242104677}
+    \fancyhead[r]{Assignment 3}
+
+    \usepackage{lastpage}
+    \fancyfoot[l]{\today}
+    \fancyfoot[c]{Aprendizado de Máquina}
+    \fancyfoot[r]{p. \thepage/\pageref*{LastPage}}
+
+    \pagestyle{fancy}
+
+\usepackage[ruled]{algorithm2e}
+    \SetKwComment{Comment}{$\triangleright$ }{}
+
+\usepackage{tikz}
+    \usetikzlibrary{shapes, positioning}
+    % Flowchart blocks
+    \tikzstyle{startstop} = [
+        rectangle, 
+        rounded corners, 
+        minimum width=2cm, 
+        minimum height=1cm,
+        text centered, 
+        draw=black, 
+        fill=red!40,
+    ]
+
+    \definecolor{brightblue}{HTML}{23C5FB} 
+    \tikzstyle{process} = [
+        rectangle, 
+        minimum width=2cm, 
+        minimum height=1cm, 
+        text centered, 
+        draw=black, 
+        fill=brightblue!30,
+        trapezium stretches=true,
+    ]
+    \tikzstyle{io} = [
+        trapezium, 
+        trapezium left angle=70, 
+        trapezium right angle=110, 
+        minimum width=2cm, 
+        minimum height=1cm, 
+        text centered, 
+        draw=black, 
+        fill=yellow!40,
+        trapezium stretches=true,
+    ]
+    \tikzstyle{decision} = [
+        diamond, 
+        minimum width=1cm, 
+        minimum height=1cm, 
+        text centered, 
+        draw=black, 
+        fill=teal!20,
+    ]
+
+\usepackage{url}
+\usepackage[colorlinks]{hyperref}
+\usepackage{cleveref}
