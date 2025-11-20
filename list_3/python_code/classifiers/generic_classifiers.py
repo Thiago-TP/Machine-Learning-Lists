@@ -2,9 +2,10 @@
 import optuna
 import optuna.visualization as vis
 import tensorflow as tf
-from tensorflow.keras import models, callbacks, Model
+from keras import callbacks, Model
 
 # Standard libraries -> type annotations and classes
+import joblib
 from typing import Any
 from pathlib import Path
 from abc import ABC, abstractmethod
@@ -29,12 +30,12 @@ class GenericClassifier(ABC):
     def train(self) -> float:
         pass
 
-    def run_optuna(self, n_trials=30) -> None:
+    def run_optuna(self, n_trials=2) -> None:
 
         study = optuna.create_study(
             direction="minimize",
-            storage=f"sqlite:///{self.name}_optuna_study.db",
-            study_name=f"{self.name}_optuna_study",
+            storage=f"sqlite:///optuna_study.db",  # database with all studies
+            study_name=f"{self.name}_optuna_study",  # particular model study
             load_if_exists=True,
         )
 
@@ -54,7 +55,9 @@ class GenericClassifier(ABC):
         """
         Generate useful visualizations and save them as HTML.
         """
-        out = Path(output_dir) / self.name
+        out = Path(output_dir)
+        out.mkdir(exist_ok=True)
+        out /= self.name
         out.mkdir(exist_ok=True)
 
         plots = {
@@ -82,22 +85,23 @@ class KerasClassifier(GenericClassifier):
         )
         # Standard hyperparameters for the FNN classifier
         self.params = {
+            "batch_norm": False,  # apply batch norm after Dense
             "batch_size": 32,  # minibatch size
             "device": "/CPU:0",
             "dropout_rate": 0.0,  # dropout between layers
             "epochs": 50,  # number of epochs
             "h_activation": "relu",  # hidden layers' activation function
-            "hidden_layers": (64, 32),  # default architecture (width, amount)
+            "hidden_layer_width": 64,  # default width of a hidden layer
             "loss": "sparse_categorical_crossentropy",  # loss function
-            "lr": 0.001,  # base learning rate
-            "lr_schedule": "constant",  # "constant", "exp_decay", "cosine_decay"
+            "learn_rate": 0.001,  # base learning rate
+            "learn_rate_schedule": "constant",  # "constant", "exp_decay", "cosine_decay"
             "metrics": ("accuracy",),  # metrics to consider
             "monitor": "val_loss",  # early stopping control
-            "optimizer_name": "adam",  # gradient descent optimizer
+            "n_hidden_layers": 32,  # default number of hidden layers
+            "optimizer": "adam",  # gradient descent optimizer
             "output_activation": "softmax",  # output activation function
             "patience": 10,  # epochs without improvement
             "restore_best_weights": True,
-            "use_batch_norm": False,  # apply batch norm after Dense
         }
 
     @abstractmethod
@@ -123,7 +127,8 @@ class KerasClassifier(GenericClassifier):
         )
 
         with tf.device(self.params["device"]):
-            self.build().fit(
+            model = self.build()
+            model.fit(
                 self.context.X_train,
                 self.context.y_train,
                 validation_data=(self.context.X_val, self.context.y_val),
@@ -133,16 +138,16 @@ class KerasClassifier(GenericClassifier):
                 verbose=0,
             )
 
-        best_model = models.load_model(self.checkpoint_path)
-        val_loss = best_model.evaluate(
-            self.context.X_val, self.context.y_val, verbose=0
-        )[0]
+        val_loss = model.evaluate(self.context.X_val, self.context.y_val, verbose=0)[0]
         return val_loss
 
 
 class SkLearnClassifier(GenericClassifier):
     def __init__(self, context: DataContext, name: str):
         super().__init__(context, name)
+        self.checkpoint_path = Path("checkpoints") / Path(
+            f"best_optuna_{self.name}.pkl"
+        )
 
     @abstractmethod
     def suggest_hyperparams(self, trial: optuna.Trial):
@@ -155,6 +160,8 @@ class SkLearnClassifier(GenericClassifier):
     def train(self):
         model = self.build()
         model.fit(self.context.X_train, self.context.y_train)
+        joblib.dump(model, self.checkpoint_path)
+
         preds = model.predict(self.context.X_val)
-        val_loss = 1.0 - sum(self.context.y_val == preds)
+        val_loss = 1.0 - (sum(self.context.y_val == preds) / len(self.context.y_val))
         return val_loss

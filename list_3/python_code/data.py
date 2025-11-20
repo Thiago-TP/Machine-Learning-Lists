@@ -4,12 +4,12 @@ from dataclasses import dataclass
 
 @dataclass
 class DataContext:
-    X_train: np.ndarray[np.float32]
-    X_val: np.ndarray[np.float32]
-    X_test: np.ndarray[np.float32]
-    y_train: np.ndarray[np.int32]
-    y_val: np.ndarray[np.int32]
-    y_test: np.ndarray[np.int32]
+    X_train: np.ndarray
+    X_val: np.ndarray
+    X_test: np.ndarray
+    y_train: np.ndarray
+    y_val: np.ndarray
+    y_test: np.ndarray
     num_features: int
     num_classes: int
 
