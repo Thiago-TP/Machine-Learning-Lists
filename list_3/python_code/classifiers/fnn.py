@@ -49,16 +49,16 @@ class FeedForwardNeuralNetworkWrapper(KerasClassifier):
         model = models.Sequential()
 
         # Hidden layers
-        for _ in range(self.params["n_hidden_layers"]):
+        for l in range(self.params["n_hidden_layers"]):
             model.add(
                 layers.Dense(
                     self.params["hidden_layer_width"],
-                    activation=self.params["h_activation"],
+                    activation=self.params["h_activation"] if l > 0 else "linear",
                 )
             )
             if self.params["batch_norm"]:
                 model.add(layers.BatchNormalization())
-            if self.params["dropout_rate"] > 0:
+            if self.params["dropout_rate"] > 0 and l > 0:
                 model.add(layers.Dropout(self.params["dropout_rate"]))
 
         # Output layer

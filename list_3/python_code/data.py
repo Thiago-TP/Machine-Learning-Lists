@@ -15,15 +15,17 @@ class DataContext:
 
 
 def prepare_data(
-    train_split: float = 0.7, validation_split: float = 0.15
+    train_split: float = 0.7, validation_split: float = 0.15, seed: int = 242104677
 ) -> DataContext:
     # Synthetic data
     num_samples = 1000
     num_features = 4
     num_classes = 3
 
-    X = np.random.randn(num_samples, num_features).astype(np.float32)
-    y = np.random.randint(0, num_classes, size=num_samples).astype(np.int32)
+    np.random.seed(seed)
+
+    X = np.random.randn(num_samples, num_features).astype(np.float64)
+    y = np.random.randint(0, num_classes, size=num_samples).astype(np.int64)
 
     train_size = int(train_split * num_samples)
     val_size = int(validation_split * num_samples)

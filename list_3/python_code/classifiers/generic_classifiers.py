@@ -3,9 +3,9 @@ import optuna
 import optuna.visualization as vis
 import tensorflow as tf
 from keras import callbacks, Model
+import joblib
 
 # Standard libraries -> type annotations and classes
-import joblib
 from typing import Any
 from pathlib import Path
 from abc import ABC, abstractmethod
@@ -30,12 +30,12 @@ class GenericClassifier(ABC):
     def train(self) -> float:
         pass
 
-    def run_optuna(self, n_trials=2) -> None:
+    def run_optuna(self, n_trials=10) -> None:
 
         study = optuna.create_study(
-            direction="minimize",
             storage=f"sqlite:///optuna_study.db",  # database with all studies
             study_name=f"{self.name}_optuna_study",  # particular model study
+            direction="minimize",
             load_if_exists=True,
         )
 
@@ -96,7 +96,7 @@ class KerasClassifier(GenericClassifier):
             "learn_rate": 0.001,  # base learning rate
             "learn_rate_schedule": "constant",  # "constant", "exp_decay", "cosine_decay"
             "metrics": ("accuracy",),  # metrics to consider
-            "monitor": "val_loss",  # early stopping control
+            "monitor": "accuracy",  # early stopping control
             "n_hidden_layers": 32,  # default number of hidden layers
             "optimizer": "adam",  # gradient descent optimizer
             "output_activation": "softmax",  # output activation function
@@ -137,17 +137,21 @@ class KerasClassifier(GenericClassifier):
                 callbacks=[early_stop, checkpoint],
                 verbose=0,
             )
+            model.save(self.checkpoint_path, include_optimizer=False)
 
-        val_loss = model.evaluate(self.context.X_val, self.context.y_val, verbose=0)[0]
-        return val_loss
+        _, val_accuracy = model.evaluate(
+            self.context.X_val, self.context.y_val, verbose=0
+        )
+
+        return 1.0 - val_accuracy
 
 
 class SkLearnClassifier(GenericClassifier):
     def __init__(self, context: DataContext, name: str):
         super().__init__(context, name)
-        self.checkpoint_path = Path("checkpoints") / Path(
-            f"best_optuna_{self.name}.pkl"
-        )
+        self.checkpoint_path = Path("checkpoints")
+        self.checkpoint_path.mkdir(exist_ok=True)
+        self.checkpoint_path /= Path(f"best_optuna_{self.name}.pkl")
 
     @abstractmethod
     def suggest_hyperparams(self, trial: optuna.Trial):
@@ -163,5 +167,6 @@ class SkLearnClassifier(GenericClassifier):
         joblib.dump(model, self.checkpoint_path)
 
         preds = model.predict(self.context.X_val)
-        val_loss = 1.0 - (sum(self.context.y_val == preds) / len(self.context.y_val))
-        return val_loss
+        val_accuracy = sum(self.context.y_val == preds) / len(self.context.y_val)
+
+        return 1.0 - val_accuracy
