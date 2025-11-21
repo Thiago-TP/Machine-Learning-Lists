@@ -6,8 +6,9 @@ environ["TF_CPP_MIN_LOG_LEVEL"] = "1"  # shush TensorFlow initialization message
 from keras.models import load_model
 from joblib import load
 
-from classifiers.fnn import FeedForwardNeuralNetworkWrapper
 from classifiers.dt import DecisionTreeWrapper
+from classifiers.fnn import FeedForwardNeuralNetworkWrapper
+from classifiers.svm import SupportVectorMachineWrapper
 from data import prepare_data
 
 if __name__ == "__main__":
@@ -16,18 +17,19 @@ if __name__ == "__main__":
     context = prepare_data()
 
     # Initialize wrappers
-    fnn = FeedForwardNeuralNetworkWrapper(context, "fnn")
     dt = DecisionTreeWrapper(context, "dt")
+    fnn = FeedForwardNeuralNetworkWrapper(context, "fnn")
+    svm = SupportVectorMachineWrapper(context, "svm")
 
     # Whether Optuna should run. If not, there should be a beskopen checkpoint model in "checkpoints"
-    run_optuna = False
+    run_optuna = True
 
     # Run each model (train, validation, and test)
-    for model in [dt, fnn]:
-        print(f"--- Model {model.name.upper()} ---")
+    for model, n_trials in zip([dt, svm, fnn], [100, 100, 30]):
+        print(f"--- {model.name.upper()} Classifier ---")
         if run_optuna:
             print(f"Running Optuna optimization for {model.name.upper()}...")
-            model.run_optuna()
+            model.run_optuna(n_trials=n_trials)
 
         # Keras' models use the module's load function
         try:

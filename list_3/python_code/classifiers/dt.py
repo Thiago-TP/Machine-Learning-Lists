@@ -25,8 +25,4 @@ class DecisionTreeWrapper(SkLearnClassifier):
         )
 
     def build(self) -> DecisionTreeClassifier:
-        return DecisionTreeClassifier(
-            criterion=self.params["criterion"],
-            max_depth=self.params["max_depth"],
-            min_samples_split=self.params["min_samples_split"],
-        )
+        return DecisionTreeClassifier(**self.params)

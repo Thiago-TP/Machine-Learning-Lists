@@ -19,6 +19,7 @@ class GenericClassifier(ABC):
         self.context: DataContext = context
         self.name = name
         self.params: dict[str, Any] = None
+        self.checkpoint_path: Path = None
 
     def suggest_hyperparams(self, trial: optuna.Trial) -> None:
         pass
@@ -30,7 +31,7 @@ class GenericClassifier(ABC):
     def train(self) -> float:
         pass
 
-    def run_optuna(self, n_trials=10) -> None:
+    def run_optuna(self, n_trials=2) -> None:
 
         study = optuna.create_study(
             storage=f"sqlite:///optuna_study.db",  # database with all studies
