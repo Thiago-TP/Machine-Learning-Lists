@@ -28,25 +28,26 @@ class GenericClassifier(ABC):
         pass
 
     @abstractmethod
-    def train(self) -> float:
+    def evaluate(self) -> float:
         pass
 
     def run_optuna(self, n_trials=2) -> None:
 
         study = optuna.create_study(
             storage=f"sqlite:///optuna_study.db",  # database with all studies
-            study_name=f"{self.name}_optuna_study",  # particular model study
+            study_name=self.name,  # particular model study
             direction="minimize",
             load_if_exists=True,
         )
 
-        def objective(trial):
+        def objective(trial) -> float:
             self.suggest_hyperparams(trial)
-            return self.train()
+            return self.evaluate()
 
         study.optimize(objective, n_trials=n_trials)
         print("\n\nBest hyperparameters so far:")
-        print(study.best_trial.params)
+        for t in study.best_trials:
+            print(t.params)
 
         self.save_optuna_visualizations(study)
 
@@ -113,7 +114,7 @@ class KerasClassifier(GenericClassifier):
     def build(self) -> Model:
         pass
 
-    def train(self) -> float:
+    def evaluate(self) -> float:
 
         early_stop = callbacks.EarlyStopping(
             monitor=self.params["monitor"],
@@ -130,9 +131,9 @@ class KerasClassifier(GenericClassifier):
         with tf.device(self.params["device"]):
             model = self.build()
             model.fit(
-                self.context.X_train,
+                self.context.x_train,
                 self.context.y_train,
-                validation_data=(self.context.X_val, self.context.y_val),
+                validation_data=(self.context.x_val, self.context.y_val),
                 epochs=self.params["epochs"],
                 batch_size=self.params["batch_size"],
                 callbacks=[early_stop, checkpoint],
@@ -141,7 +142,7 @@ class KerasClassifier(GenericClassifier):
             model.save(self.checkpoint_path, include_optimizer=False)
 
         _, val_accuracy = model.evaluate(
-            self.context.X_val, self.context.y_val, verbose=0
+            self.context.x_val, self.context.y_val, verbose=0
         )
 
         return 1.0 - val_accuracy
@@ -162,12 +163,11 @@ class SkLearnClassifier(GenericClassifier):
     def build(self) -> Any:
         pass
 
-    def train(self):
+    def evaluate(self) -> float:
         model = self.build()
-        model.fit(self.context.X_train, self.context.y_train)
+        model.fit(self.context.x_train, self.context.y_train)
         joblib.dump(model, self.checkpoint_path)
 
-        preds = model.predict(self.context.X_val)
+        preds = model.predict(self.context.x_val)
         val_accuracy = sum(self.context.y_val == preds) / len(self.context.y_val)
-
         return 1.0 - val_accuracy
