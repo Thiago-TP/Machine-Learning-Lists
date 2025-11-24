@@ -92,10 +92,16 @@ def prepare_data(
         - seed (int): Random seed for shuffling data. Defaults to 242104677.
         - summary (bool): Whether to print a summary of the correlation filtering process. Defaults to True.
     """
+    # Load data from CSV assingning integers to categorical features
+    data = (
+        pd.read_csv(path + csv_name)
+        .drop(columns=drop_columns)
+        .dropna()
+        .apply(lambda x: pd.factorize(x)[0] if x.dtype == "object" else x)
+        .reset_index(drop=True)
+    )
+
     # Parse raw data into samples and labels
-    data = pd.read_csv(path + csv_name).drop(columns=drop_columns).dropna()
-    data = data.apply(lambda x: pd.factorize(x)[0] if x.dtype == "object" else x)
-    data.reset_index(drop=True, inplace=True)
     x, y = data.drop(columns=label_columns), data[label_columns]
 
     # Remove highly correlated features from samples
@@ -109,7 +115,7 @@ def prepare_data(
         plot_correlations(x_f, path + "filtered_correlations.png", figsize=(20, 20))
 
     # Log effects of correlation filtering
-    num_classes = np.max(y) + 1 if y.shape[1] == 1 else y.shape[1]
+    num_classes = np.max(y) + 1
     num_samples, num_features = x_f.shape
     if summary:
         print("=== CORRELATION FILTERING SUMMARY ===")
@@ -122,6 +128,8 @@ def prepare_data(
         print(f"- Removed features:")
         for feature in sorted(hcp["x2"].unique()):
             print(f"\t- {feature}")
+        else:
+            print("\t- None")
         print("=====================================\n")
 
     # Shuffles then parses non highly correlated data into DataContext
@@ -131,8 +139,6 @@ def prepare_data(
 
     x_shuffled = x_f.to_numpy(dtype=np.float64)[rand_inds]
     y_shuffled = y.to_numpy(dtype=np.int64)[rand_inds]
-    if y_shuffled.shape[1] == 1:
-        y_shuffled = y_shuffled.ravel()
 
     train_size = int(train_split * num_samples)
     val_size = int(validation_split * num_samples)
@@ -152,34 +158,15 @@ def prepare_data(
 if __name__ == "__main__":
     # Use examples / test on assignment's datasets
 
-    # Alameda PADS multilabel classification dataset
-    # https://zenodo.org/records/10782573
-    multilabel_context = prepare_data(
-        path="./data/multiclass_classification/",
-        csv_name="ALAMEDA_PD_tremor_dataset.csv",
-        label_columns=[  # last 4 columns are labels
-            "Constancy_of_rest",
-            "Kinetic_tremor",
-            "Postural_tremor",
-            "Rest_tremor",
-        ],
-        drop_columns=[
-            "start_timestamp",  # irrelevant for classification at hand
-            "end_timestamp",  # irrelevant for classification
-            "subject_id",  # irrelevant for classification
-            "Magnitude_fft_dom_freq",  # always 0
-            "Magnitude_fft_pw_ar_dom_freq",  # always 0
-        ],
-        summary=True,
-    )
-    print(multilabel_context.y_train)
+    # ? binary classification dataset
+    # binary_context = prepare_data()
 
     # PPMI multiclass classification dataset
     # https://www.ppmi-info.org/access-data-specimens/download-data
     multiclass_context = prepare_data(
-        path="./data/binary_classification/",
+        path="./data/multiclass_classification/",
         csv_name="meta_data.11192021.csv",
-        drop_columns=[  # irrelevant/redundant for classification at hand
+        drop_columns=[  # irrelevant/redundant for classification at hand or too sparse
             "HudAlphaSampleName",
             "Small RNA-Seq",
             "Long RNA-seq",
@@ -212,7 +199,7 @@ if __name__ == "__main__":
             "UPDRS totscore",
             "UPSIT",
             "moca",
-            # Redundant with "Case Control" label
+            # Redundant with "Case Control": they are all valid labels
             "Disease Status",  # strictly multiclass ("PD", "SWEDD", "Healthy Control", etc)
             "Study Arm",  # strictly multiclass ("PD", "SWEDD", "Healthy Control", etc)
             "Diagnosis",  # strictly multiclass ("PD", "SWEDD", "Healthy Control", etc)
@@ -220,7 +207,12 @@ if __name__ == "__main__":
         label_columns=[
             "Case Control",  # strictly multiclass ("Case", "Control", "Other")
         ],
-        plot_corr=True,
+        plot_corr=False,
         summary=True,
     )
-    print(multiclass_context.y_train)
+    print("Labels:")
+    for l in np.unique(multiclass_context.y_train):
+        occurrences = sum(multiclass_context.y_train == l)[0]
+        print(
+            f"\t- '{l}': {occurrences} samples ({100 * occurrences / multiclass_context.y_train.shape[0]:.2f}%)"
+        )
