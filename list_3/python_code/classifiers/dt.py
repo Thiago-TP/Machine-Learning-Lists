@@ -25,4 +25,6 @@ class DecisionTreeWrapper(SkLearnClassifier):
         )
 
     def build(self) -> DecisionTreeClassifier:
-        return DecisionTreeClassifier(**self.params)
+        return DecisionTreeClassifier(**self.params).fit(
+            self.context.x_train, self.context.y_train
+        )

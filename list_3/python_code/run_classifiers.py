@@ -3,8 +3,8 @@ from os import environ
 environ["TF_ENABLE_ONEDNN_OPTS"] = "0"  # turn off oneDNN custom operations
 environ["TF_CPP_MIN_LOG_LEVEL"] = "1"  # shush TensorFlow initialization messages
 
-from keras.models import load_model
-from joblib import load
+import optuna
+from keras.utils import plot_model
 
 from classifiers.dt import DecisionTreeWrapper
 from classifiers.fnn import FeedForwardNeuralNetworkWrapper
@@ -25,6 +25,7 @@ def load_ppmi() -> DataContext:
             "Long RNA-seq",
             "PATNO",
             "PATNO Visit",
+            "PoolAssign",
             "Phase",
             "Clinical Event",
             "Month",
@@ -66,30 +67,40 @@ if __name__ == "__main__":
 
     # Initialize data
     context_multiclass = load_ppmi()
+    # context_binaryclass = todo!()
 
     # Initialize wrappers
     dt = DecisionTreeWrapper(context_multiclass, "dt")
     fnn = FeedForwardNeuralNetworkWrapper(context_multiclass, "fnn")
-    svm = SupportVectorMachineWrapper(context_multiclass, "svm")
+    # svm = SupportVectorMachineWrapper(context_binaryclass, "svm")
 
-    # Whether Optuna should run. If not, there should be a beskopen checkpoint model in "checkpoints"
-    run_optuna = True
+    # Whether Optuna should run.
+    # If not, there should already be a study saved.
+    # If a study already exists, running Optuna again will continue it.
+    run_optuna = False
 
     # Run each model (train, validation, and test)
-    for model, n_trials in zip([dt, svm, fnn], [10, 10, 3]):
+    for model in [dt, fnn]:
         print(f"--- {model.name.upper()} Classifier ---")
+
+        # Start or resume Optuna study
         if run_optuna:
-            print(f"Running Optuna optimization for {model.name.upper()}...")
-            model.run_optuna(n_trials=n_trials)
+            best_model = model.run_optuna()
 
-        # Keras' models use the module's load function
-        try:
-            _, model_acc = load_model(model.checkpoint_path).evaluate(
-                model.context.x_test, model.context.y_test, verbose=0
+        # Load best model from existing study
+        else:
+            study = optuna.load_study(
+                storage="sqlite:///optuna_study.db",  # database with all studies
+                study_name=model.name,  # particular model study
             )
-        # Scikit models use joblib's load
-        except ValueError:
-            test_preds = load(model.checkpoint_path).predict(model.context.x_test)
-            model_acc = sum(test_preds == model.context.y_test) / len(test_preds)
+            model.params.update(study.best_params)
+            best_model = model.build()
 
-        print(f"\t- Test accuracy: {100 * model_acc}%")
+        # Test the best model (predict is shared by Keras and Sklearn)
+        test_preds = best_model.predict(model.context.x_test)
+        if test_preds.ndim > 1:  # convert one-hot outputs to intergers
+            test_preds = test_preds.argmax(axis=1)
+            plot_model(best_model, to_file=f"{model.name}.png", show_shapes=True)
+
+        test_accuracy = sum(test_preds == model.context.y_test) / len(test_preds)
+        print(f"[Test] Accuracy: {100 * test_accuracy:.2f}%\n")

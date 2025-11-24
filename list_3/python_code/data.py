@@ -105,7 +105,7 @@ def prepare_data(
     # Plot correlations before and after filtering
     # May take a while to finish for large datasets
     if plot_corr:
-        plot_correlations(x, path + "original_correlations.png", figsize=(60, 60))
+        plot_correlations(x, path + "original_correlations.png", figsize=(20, 20))
         plot_correlations(x_f, path + "filtered_correlations.png", figsize=(20, 20))
 
     # Log effects of correlation filtering
@@ -185,6 +185,7 @@ if __name__ == "__main__":
             "Long RNA-seq",
             "PATNO",
             "PATNO Visit",
+            "PoolAssign",
             "Phase",
             "Clinical Event",
             "Month",
@@ -219,6 +220,7 @@ if __name__ == "__main__":
         label_columns=[
             "Case Control",  # strictly multiclass ("Case", "Control", "Other")
         ],
+        plot_corr=True,
         summary=True,
     )
     print(multiclass_context.y_train)
