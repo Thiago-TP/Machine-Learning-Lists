@@ -73,8 +73,8 @@ def prepare_data(
     train_split: float = 0.7,
     validation_split: float = 0.15,
     seed: int = 242104677,
-    plot_corr: bool = True,
-    summary: bool = True,
+    plot_corr: bool = False,
+    summary: bool = False,
 ) -> DataContext:
     """
     Prepare data for classification tasks by loading a CSV into a DataContext object. Features are removed if highly correlated.
@@ -93,12 +93,10 @@ def prepare_data(
         - summary (bool): Whether to print a summary of the correlation filtering process. Defaults to True.
     """
     # Parse raw data into samples and labels
-    data = pd.read_csv(path + csv_name).drop(columns=drop_columns)
+    data = pd.read_csv(path + csv_name).drop(columns=drop_columns).dropna()
+    data = data.apply(lambda x: pd.factorize(x)[0] if x.dtype == "object" else x)
+    data.reset_index(drop=True, inplace=True)
     x, y = data.drop(columns=label_columns), data[label_columns]
-
-    # Reshape labels for multi-class classification
-    weights = 1 << np.arange(len(label_columns))
-    y = y.dot(weights)
 
     # Remove highly correlated features from samples
     hcp = highly_correlated_pairs(x, threshold=correlation_threshold)
@@ -111,29 +109,30 @@ def prepare_data(
         plot_correlations(x_f, path + "filtered_correlations.png", figsize=(20, 20))
 
     # Log effects of correlation filtering
+    num_classes = np.max(y) + 1 if y.shape[1] == 1 else y.shape[1]
+    num_samples, num_features = x_f.shape
     if summary:
         print("=== CORRELATION FILTERING SUMMARY ===")
-        print(f"- Samples: {x.shape[0]}")
-        print(f"- Features: {x.shape[1]}")
-        print(f"- Classes: {len(label_columns)}")
+        print(f"- Samples: {num_samples}")
+        print(f"- Features: {num_features}")
+        print(f"- Classes: {num_classes}")
         print(f"- Original features: {x.shape[1]}")
-        print(f"- Removed features: {hcp["x2"].unique().size}")
-        print(f"- Reduction: {100 * (1 - x_f.shape[1] / x.shape[1]):.2f}%")
+        print(f"- Removed features: {x.shape[1] - num_features}")
+        print(f"- Reduction: {100 * (1 - num_features / x.shape[1]):.2f}%")
         print(f"- Removed features:")
         for feature in sorted(hcp["x2"].unique()):
             print(f"\t- {feature}")
-        print("=====================================")
+        print("=====================================\n")
 
     # Shuffles then parses non highly correlated data into DataContext
-    num_classes = y.max() + 1
-    num_samples, num_features = x_f.shape
-
     rand_inds = np.arange(num_samples)
     np.random.seed(seed)
     np.random.shuffle(rand_inds)
 
     x_shuffled = x_f.to_numpy(dtype=np.float64)[rand_inds]
     y_shuffled = y.to_numpy(dtype=np.int64)[rand_inds]
+    if y_shuffled.shape[1] == 1:
+        y_shuffled = y_shuffled.ravel()
 
     train_size = int(train_split * num_samples)
     val_size = int(validation_split * num_samples)
@@ -152,32 +151,74 @@ def prepare_data(
 
 if __name__ == "__main__":
     # Use examples / test on assignment's datasets
-    multiclass_context = prepare_data(
+
+    # Alameda PADS multilabel classification dataset
+    # https://zenodo.org/records/10782573
+    multilabel_context = prepare_data(
         path="./data/multiclass_classification/",
         csv_name="ALAMEDA_PD_tremor_dataset.csv",
-        label_columns=[  # last 4 columns are labels (source: https://zenodo.org/records/10782573)
+        label_columns=[  # last 4 columns are labels
             "Constancy_of_rest",
             "Kinetic_tremor",
             "Postural_tremor",
             "Rest_tremor",
         ],
         drop_columns=[
-            "start_timestamp",  # irrelevant for classification
+            "start_timestamp",  # irrelevant for classification at hand
             "end_timestamp",  # irrelevant for classification
             "subject_id",  # irrelevant for classification
             "Magnitude_fft_dom_freq",  # always 0
             "Magnitude_fft_pw_ar_dom_freq",  # always 0
         ],
-        plot_corr=False,
+        summary=True,
     )
+    print(multilabel_context.y_train)
 
+    # PPMI multiclass classification dataset
+    # https://www.ppmi-info.org/access-data-specimens/download-data
+    multiclass_context = prepare_data(
+        path="./data/binary_classification/",
+        csv_name="meta_data.11192021.csv",
+        drop_columns=[  # irrelevant/redundant for classification at hand
+            "HudAlphaSampleName",
+            "Small RNA-Seq",
+            "Long RNA-seq",
+            "PATNO",
+            "PATNO Visit",
+            "Phase",
+            "Clinical Event",
+            "Month",
+            "Age (Bin)",
+            "Age at diagnosis",
+            "Box",
+            "Position",
+            "Plate",
+            "Neutrophil Score",
+            "Basophils (%)",
+            "Eosinophils (%)",
+            "Lymphocytes (%)",
+            "Neutrophils (%)",
+            "Neutrophil/Lymphocyte",
+            "RBC Morphology",
+            "Usable Bases (%)",
+            "Multimapped (%)",
+            "Uniquely mapped (%)",
+            "Total reads",
+            "UPDRS1 score",
+            "UPDRS2 score",
+            "UPDRS3 score",
+            "UPDRS4 score",
+            "UPDRS totscore",
+            "UPSIT",
+            "moca",
+            # Redundant with "Case Control" label
+            "Disease Status",  # strictly multiclass ("PD", "SWEDD", "Healthy Control", etc)
+            "Study Arm",  # strictly multiclass ("PD", "SWEDD", "Healthy Control", etc)
+            "Diagnosis",  # strictly multiclass ("PD", "SWEDD", "Healthy Control", etc)
+        ],
+        label_columns=[
+            "Case Control",  # strictly multiclass ("Case", "Control", "Other")
+        ],
+        summary=True,
+    )
     print(multiclass_context.y_train)
-
-    # binary_class_context = prepare_data(
-    #     path="./data/binary_classification/",
-    #     csv_name="meta_data.11192021.csv",
-    #     drop_columns=[],
-    #     label_columns=["label"],
-    #     plot_corr=False,
-    #     summary=True,
-    # )

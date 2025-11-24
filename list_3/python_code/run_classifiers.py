@@ -12,38 +12,65 @@ from classifiers.svm import SupportVectorMachineWrapper
 from data import DataContext, prepare_data
 
 
-def load_pads() -> DataContext:
+def load_ppmi() -> DataContext:
+
+    # PPMI multiclass classification dataset
+    # https://www.ppmi-info.org/access-data-specimens/download-data
     return prepare_data(
-        path="./data/multiclass_classification/",
-        csv_name="ALAMEDA_PD_tremor_dataset.csv",
-        label_columns=[  # last 4 columns are labels (source: https://zenodo.org/records/10782573)
-            "Constancy_of_rest",
-            "Kinetic_tremor",
-            "Postural_tremor",
-            "Rest_tremor",
+        path="./data/binary_classification/",
+        csv_name="meta_data.11192021.csv",
+        drop_columns=[  # irrelevant/redundant for classification at hand
+            "HudAlphaSampleName",
+            "Small RNA-Seq",
+            "Long RNA-seq",
+            "PATNO",
+            "PATNO Visit",
+            "Phase",
+            "Clinical Event",
+            "Month",
+            "Age (Bin)",
+            "Age at diagnosis",
+            "Box",
+            "Position",
+            "Plate",
+            "Neutrophil Score",
+            "Basophils (%)",
+            "Eosinophils (%)",
+            "Lymphocytes (%)",
+            "Neutrophils (%)",
+            "Neutrophil/Lymphocyte",
+            "RBC Morphology",
+            "Usable Bases (%)",
+            "Multimapped (%)",
+            "Uniquely mapped (%)",
+            "Total reads",
+            "UPDRS1 score",
+            "UPDRS2 score",
+            "UPDRS3 score",
+            "UPDRS4 score",
+            "UPDRS totscore",
+            "UPSIT",
+            "moca",
+            # Redundant with "Case Control" label
+            "Disease Status",  # strictly multiclass ("PD", "SWEDD", "Healthy Control", etc)
+            "Study Arm",  # strictly multiclass ("PD", "SWEDD", "Healthy Control", etc)
+            "Diagnosis",  # strictly multiclass ("PD", "SWEDD", "Healthy Control", etc)
         ],
-        drop_columns=[
-            "start_timestamp",  # irrelevant for classification
-            "end_timestamp",  # irrelevant for classification
-            "subject_id",  # irrelevant for classification
-            "Magnitude_fft_dom_freq",  # always 0
-            "Magnitude_fft_pw_ar_dom_freq",  # always 0
+        label_columns=[
+            "Case Control",  # strictly multiclass ("Case", "Control", "Other")
         ],
-        plot_corr=False,
-        summary=False,
     )
 
 
 if __name__ == "__main__":
 
     # Initialize data
-    context_multiclass = load_pads()
-    context_binary_class = load_pads()  # replace with load_ppmi() when available
+    context_multiclass = load_ppmi()
 
     # Initialize wrappers
     dt = DecisionTreeWrapper(context_multiclass, "dt")
     fnn = FeedForwardNeuralNetworkWrapper(context_multiclass, "fnn")
-    svm = SupportVectorMachineWrapper(context_binary_class, "svm")
+    svm = SupportVectorMachineWrapper(context_multiclass, "svm")
 
     # Whether Optuna should run. If not, there should be a beskopen checkpoint model in "checkpoints"
     run_optuna = True
