@@ -118,21 +118,6 @@ def prepare_data(
     # Log effects of correlation filtering
     num_classes = np.max(y) + 1
     num_samples, num_features = x_f.shape
-    if summary:
-        print("=== CORRELATION FILTERING SUMMARY ===")
-        print(f"- Samples: {num_samples}")
-        print(f"- Features: {num_features}")
-        print(f"- Classes: {num_classes}")
-        print(f"- Original features: {x.shape[1]}")
-        print(f"- Removed features: {x.shape[1] - num_features}")
-        print(f"- Reduction: {100 * (1 - num_features / x.shape[1]):.2f}%")
-        print(f"- Removed features:")
-        if not hcp.empty:
-            for feature in sorted(hcp["x2"].unique()):
-                print(f"\t- {feature}")
-        else:
-            print("\t- None")
-        print("=====================================\n")
 
     # Shuffles then parses non highly correlated data into DataContext
     rand_inds = np.arange(num_samples)
@@ -145,7 +130,7 @@ def prepare_data(
     train_size = int(train_split * num_samples)
     val_size = int(validation_split * num_samples)
 
-    return DataContext(
+    context = DataContext(
         x_train=x_shuffled[:train_size],
         y_train=y_shuffled[:train_size],
         x_val=x_shuffled[train_size : train_size + val_size],
@@ -155,6 +140,32 @@ def prepare_data(
         num_features=num_features,
         num_classes=num_classes,
     )
+
+    if summary:
+        write_filtering_info(x, context, hcp)
+        write_label_info(context)
+
+    return context
+
+
+def write_filtering_info(
+    x: pd.DataFrame, context: DataContext, hcp: pd.DataFrame
+) -> None:
+
+    print("=== CORRELATION FILTERING SUMMARY ===")
+    print(f"- Samples: {x.shape[0]}")
+    print(f"- Features: {context.num_features}")
+    print(f"- Classes: {context.num_classes}")
+    print(f"- Original features: {x.shape[1]}")
+    print(f"- Removed features: {x.shape[1] - context.num_features}")
+    print(f"- Reduction: {100 * (1 - context.num_features / x.shape[1]):.2f}%")
+    print(f"- Removed features:")
+    if not hcp.empty:
+        for feature in sorted(hcp["x2"].unique()):
+            print(f"\t- {feature}")
+    else:
+        print("\t- None")
+    print("=====================================\n")
 
 
 def write_label_info(context: DataContext):
@@ -173,27 +184,31 @@ def write_label_info(context: DataContext):
     print("=====================\n")
 
 
-if __name__ == "__main__":
-    # Use examples / test on assignment's datasets
+# --- APIs for loading assignment datasets ---
 
+
+def load_parkinson_detection(
+    plot_corr: bool = False, summary: bool = False
+) -> DataContext:
     # Oxford Parkinson's Disease Detection Dataset
     # https://archive.ics.uci.edu/dataset/174/parkinsons
-    binary_context = prepare_data(
+    return prepare_data(
         path="./data/binary_classification/",
         csv_name="parkinsons.csv",
         drop_columns=["name"],
         label_column="status",  # 1 for PD, 0 for healthy
-        plot_corr=True,
-        summary=True,
+        plot_corr=plot_corr,
+        summary=summary,
     )
-    write_label_info(binary_context)
 
+
+def load_ppmi(plot_corr: bool = False, summary: bool = False) -> DataContext:
     # PPMI multiclass classification dataset
     # https://www.ppmi-info.org/access-data-specimens/download-data
-    multiclass_context = prepare_data(
+    return prepare_data(
         path="./data/multiclass_classification/",
         csv_name="meta_data.11192021.csv",
-        drop_columns=[  # irrelevant/redundant for classification at hand or too sparse
+        drop_columns=[  # irrelevant/redundant for classification at hand
             "HudAlphaSampleName",
             "Small RNA-Seq",
             "Long RNA-seq",
@@ -226,13 +241,21 @@ if __name__ == "__main__":
             "UPDRS totscore",
             "UPSIT",
             "moca",
-            # Redundant with "Case Control": they are all valid labels
+            # Redundant with "Case Control" label
             "Disease Status",  # strictly multiclass ("PD", "SWEDD", "Healthy Control", etc)
             "Study Arm",  # strictly multiclass ("PD", "SWEDD", "Healthy Control", etc)
             "Diagnosis",  # strictly multiclass ("PD", "SWEDD", "Healthy Control", etc)
         ],
         label_column="Case Control",  # strictly multiclass ("Case", "Control", "Other")
-        plot_corr=True,
-        summary=True,
+        plot_corr=plot_corr,
+        summary=summary,
     )
-    write_label_info(multiclass_context)
+
+
+# --------------------------------------------
+
+
+if __name__ == "__main__":
+    # Test loading functions
+    _ = load_parkinson_detection(plot_corr=True, summary=True)
+    _ = load_ppmi(plot_corr=True, summary=True)

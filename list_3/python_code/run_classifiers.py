@@ -1,4 +1,4 @@
-import optuna
+from optuna import load_study
 from os import environ
 
 environ["TF_ENABLE_ONEDNN_OPTS"] = "0"  # turn off oneDNN custom operations
@@ -7,66 +7,7 @@ environ["TF_CPP_MIN_LOG_LEVEL"] = "1"  # shush TensorFlow initialization message
 from classifiers.dt import DecisionTreeWrapper
 from classifiers.fnn import FeedForwardNeuralNetworkWrapper
 from classifiers.svm import SupportVectorMachineWrapper
-from data import DataContext, prepare_data
-
-
-def load_parkinson_detection() -> DataContext:
-    # Oxford Parkinson's Disease Detection Dataset
-    # https://archive.ics.uci.edu/dataset/174/parkinsons
-    return prepare_data(
-        path="./data/binary_classification/",
-        csv_name="parkinsons.csv",
-        drop_columns=["name"],
-        label_column="status",  # 1 for PD, 0 for healthy
-    )
-
-
-def load_ppmi() -> DataContext:
-    # PPMI multiclass classification dataset
-    # https://www.ppmi-info.org/access-data-specimens/download-data
-    return prepare_data(
-        path="./data/multiclass_classification/",
-        csv_name="meta_data.11192021.csv",
-        drop_columns=[  # irrelevant/redundant for classification at hand
-            "HudAlphaSampleName",
-            "Small RNA-Seq",
-            "Long RNA-seq",
-            "PATNO",
-            "PATNO Visit",
-            "PoolAssign",
-            "Phase",
-            "Clinical Event",
-            "Month",
-            "Age (Bin)",
-            "Age at diagnosis",
-            "Box",
-            "Position",
-            "Plate",
-            "Neutrophil Score",
-            "Basophils (%)",
-            "Eosinophils (%)",
-            "Lymphocytes (%)",
-            "Neutrophils (%)",
-            "Neutrophil/Lymphocyte",
-            "RBC Morphology",
-            "Usable Bases (%)",
-            "Multimapped (%)",
-            "Uniquely mapped (%)",
-            "Total reads",
-            "UPDRS1 score",
-            "UPDRS2 score",
-            "UPDRS3 score",
-            "UPDRS4 score",
-            "UPDRS totscore",
-            "UPSIT",
-            "moca",
-            # Redundant with "Case Control" label
-            "Disease Status",  # strictly multiclass ("PD", "SWEDD", "Healthy Control", etc)
-            "Study Arm",  # strictly multiclass ("PD", "SWEDD", "Healthy Control", etc)
-            "Diagnosis",  # strictly multiclass ("PD", "SWEDD", "Healthy Control", etc)
-        ],
-        label_column="Case Control",  # strictly multiclass ("Case", "Control", "Other")
-    )
+from data import load_parkinson_detection, load_ppmi
 
 
 if __name__ == "__main__":
@@ -86,16 +27,16 @@ if __name__ == "__main__":
     run_optuna = True
 
     # Run each model (train, validation, and test)
-    for model, n_trials in [dt, svm, fnn]:
+    for model, n_trials in zip([dt, svm, fnn], [25, 25, 25]):
         print(f"--- {model.name.upper()} Classifier ---")
 
         # Start or resume Optuna study
         if run_optuna:
-            best_model = model.run_optuna()
+            best_model = model.run_optuna(n_trials=n_trials)
 
         # Load best model from existing study
         else:
-            study = optuna.load_study(
+            study = load_study(
                 storage="sqlite:///optuna_study.db",  # database with all studies
                 study_name=model.name,  # particular model study
             )

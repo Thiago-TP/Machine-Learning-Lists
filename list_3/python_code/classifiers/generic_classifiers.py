@@ -68,11 +68,16 @@ class GenericClassifier(ABC):
         out.mkdir(exist_ok=True)
 
         plots = {
-            "optimization_history.html": vis.plot_optimization_history(study),
-            "param_importances.html": vis.plot_param_importances(study),
-            "parallel_coordinate.html": vis.plot_parallel_coordinate(study),
             "contour.html": vis.plot_contour(study),
+            "edf.html": vis.plot_edf(study),
+            "intermediate_values.html": vis.plot_intermediate_values(study),
+            "optimization_history.html": vis.plot_optimization_history(study),
+            "parallel_coordinate.html": vis.plot_parallel_coordinate(study),
+            "param_importances.html": vis.plot_param_importances(study),
+            "rank.html": vis.plot_rank(study),
             "slice.html": vis.plot_slice(study),
+            "terminator_improvement.html": vis.plot_terminator_improvement(study),
+            "timeline.html": vis.plot_timeline(study),
         }
 
         for filename, fig in plots.items():
