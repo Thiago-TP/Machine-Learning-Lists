@@ -67,8 +67,9 @@ def plot_correlations(
 def prepare_data(
     path: str,
     csv_name: str,
-    label_columns: Iterable[str],
+    label_column: str,
     drop_columns: Iterable[str] | None = None,
+    skiprows: int = 0,
     correlation_threshold: float = 0.9,
     train_split: float = 0.7,
     validation_split: float = 0.15,
@@ -94,7 +95,7 @@ def prepare_data(
     """
     # Load data from CSV assingning integers to categorical features
     data = (
-        pd.read_csv(path + csv_name)
+        pd.read_csv(path + csv_name, skiprows=skiprows)
         .drop(columns=drop_columns)
         .dropna()
         .apply(lambda x: pd.factorize(x)[0] if x.dtype == "object" else x)
@@ -102,7 +103,7 @@ def prepare_data(
     )
 
     # Parse raw data into samples and labels
-    x, y = data.drop(columns=label_columns), data[label_columns]
+    x, y = data.drop(columns=[label_column]), data[[label_column]]
 
     # Remove highly correlated features from samples
     hcp = highly_correlated_pairs(x, threshold=correlation_threshold)
@@ -111,8 +112,8 @@ def prepare_data(
     # Plot correlations before and after filtering
     # May take a while to finish for large datasets
     if plot_corr:
-        plot_correlations(x, path + "original_correlations.png", figsize=(20, 20))
-        plot_correlations(x_f, path + "filtered_correlations.png", figsize=(20, 20))
+        plot_correlations(x, path + "original_correlations.pdf", figsize=(20, 20))
+        plot_correlations(x_f, path + "filtered_correlations.pdf", figsize=(20, 20))
 
     # Log effects of correlation filtering
     num_classes = np.max(y) + 1
@@ -126,8 +127,9 @@ def prepare_data(
         print(f"- Removed features: {x.shape[1] - num_features}")
         print(f"- Reduction: {100 * (1 - num_features / x.shape[1]):.2f}%")
         print(f"- Removed features:")
-        for feature in sorted(hcp["x2"].unique()):
-            print(f"\t- {feature}")
+        if not hcp.empty:
+            for feature in sorted(hcp["x2"].unique()):
+                print(f"\t- {feature}")
         else:
             print("\t- None")
         print("=====================================\n")
@@ -138,7 +140,7 @@ def prepare_data(
     np.random.shuffle(rand_inds)
 
     x_shuffled = x_f.to_numpy(dtype=np.float64)[rand_inds]
-    y_shuffled = y.to_numpy(dtype=np.int64)[rand_inds]
+    y_shuffled = y.to_numpy(dtype=np.int64)[rand_inds].ravel()
 
     train_size = int(train_split * num_samples)
     val_size = int(validation_split * num_samples)
@@ -155,11 +157,36 @@ def prepare_data(
     )
 
 
+def write_label_info(context: DataContext):
+    print("=== LABEL SUMMARY ===")
+    for mode, y in {
+        "Train": context.y_train,
+        "Validation": context.y_val,
+        "Test": context.y_test,
+    }.items():
+        print(f"{mode} Labels:")
+        for l in np.unique(y):
+            occurrences = sum(y == l)
+            print(
+                f"\t- '{l}': {occurrences} samples ({100 * occurrences / y.shape[0]:.2f}%)"
+            )
+    print("=====================\n")
+
+
 if __name__ == "__main__":
     # Use examples / test on assignment's datasets
 
-    # ? binary classification dataset
-    # binary_context = prepare_data()
+    # Oxford Parkinson's Disease Detection Dataset
+    # https://archive.ics.uci.edu/dataset/174/parkinsons
+    binary_context = prepare_data(
+        path="./data/binary_classification/",
+        csv_name="parkinsons.csv",
+        drop_columns=["name"],
+        label_column="status",  # 1 for PD, 0 for healthy
+        plot_corr=True,
+        summary=True,
+    )
+    write_label_info(binary_context)
 
     # PPMI multiclass classification dataset
     # https://www.ppmi-info.org/access-data-specimens/download-data
@@ -204,15 +231,8 @@ if __name__ == "__main__":
             "Study Arm",  # strictly multiclass ("PD", "SWEDD", "Healthy Control", etc)
             "Diagnosis",  # strictly multiclass ("PD", "SWEDD", "Healthy Control", etc)
         ],
-        label_columns=[
-            "Case Control",  # strictly multiclass ("Case", "Control", "Other")
-        ],
-        plot_corr=False,
+        label_column="Case Control",  # strictly multiclass ("Case", "Control", "Other")
+        plot_corr=True,
         summary=True,
     )
-    print("Labels:")
-    for l in np.unique(multiclass_context.y_train):
-        occurrences = sum(multiclass_context.y_train == l)[0]
-        print(
-            f"\t- '{l}': {occurrences} samples ({100 * occurrences / multiclass_context.y_train.shape[0]:.2f}%)"
-        )
+    write_label_info(multiclass_context)
