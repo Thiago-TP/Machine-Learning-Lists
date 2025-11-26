@@ -1,5 +1,5 @@
 \section{Question 1}
-Train and evaluate a Feedforward Neural Network for a  multiclass classification task.
+Train and evaluate a Feedforward Neural Network (FNN) for a  multiclass classification task.
 %
 Split your data into a training set, a validation set 
 (used to define the stopping criterion - e.g., number of epochs), 
@@ -12,78 +12,3 @@ Describe your dataset, the network architecture
 (hidden units, layer dimensions, and number of layers), 
 and discuss the overall performance
 (data splitting strategy, classification accuracy, and confusion matrix).
-
-\noindent\rule{\textwidth}{.5pt}
-
-% \begin{align}
-%     z^t_h &= \mathrm{sigmoid} \left(\sum_j w_{hj} x^t_j + w_{h0}\right) \\
-%     o_i^t &= \sum_h v_{ih}z^t_{h} + v_{i0} \\
-%     y_i^t &= \frac{\exp(o^t_i)}{\displaystyle\sum_k \exp(o^t_k)} \\
-%     E(\mathbf{W}, \mathbf{V} | \mathcal{X}) &=-\sum_t \sum_i r_i^t \log y_i^t 
-% \end{align}
-
-\begin{itemize}
-    \item $0 \leq l \leq L$ (layer index)
-    \item $1 \leq t \leq T$ (input index)
-    \item $\mathbf{x}_t \in \mathbb{R}^{d\times 1}$ (input)
-    \item $\mathbf{x}^*_t = [1\ \mathbf{x}^\T_t]^\T \in \mathbb{R}^{(d+1)\times 1}$ (augmented input)
-    \item $\phi: \mathbb{R}^{(d+1)\times 1} \to \mathbb{R}^{(d+1)\times 1}$ (activation function)
-    \item $\mathbf{W}^l_t \in \mathbb{R}^{(d+1)\times (d+1)}$ (layer weights)
-    \item $\mathbf{h}^l_t \in \mathbb{R}^{(d+1)\times 1}$ (layer output)
-    \item $\softmax: \mathbb{R}^{c\times 1} \to \mathbb{R}^{c\times 1}$ s.t.
-    $$
-        \softmax([u_1\ u_2\ \cdots\ u_c]^\T) = 
-        [\exp(u_1)\ \exp(u_2)\ \cdots\ \exp(u_c)]^\T 
-        / \sum_k\exp(u_k)
-    $$
-    \item $\mathbf{V}_t \in \mathbb{R}^{c\times (d+1)}$ (output weights)
-    \item $\mathbf{y}_t \in \mathbb{R}^{c\times 1}$ (output)
-    \item $\mathbf{r}_t \in \mathbb{R}^{c\times 1}$ (label)
-    \item $L$ (loss/error function)
-\end{itemize}
-
-\begin{align}
-    \mathbf{h}^l_t &=
-    \begin{cases}
-        \mathbf{x}^{*}_t,                             & l = 0 \\
-        \phi(\mathbf{W}^l_t\mathbf{h}^{l-1}_t), & l > 0
-    \end{cases} 
-\\
-    \mathbf{y}_t &= 
-    \softmax(
-        \mathbf{V}_t
-        \mathbf{h}^L_t
-    ) 
-\\
-    L_t(\mathbf{W}, \mathbf{V}) &= -\sum_{\tau\leq t} \sum_i r_{\tau i} \log y_{\tau i}  
-\end{align}
-
-Problem: change $\mathbf{W}^l_t$, $\mathbf{V}_t$ to minimize $L_t$.
-
-Solution: apply the chain rule of the derivative.
-
-\begin{align}
-    L_t(\mathbf{W}, \mathbf{V}) &= -\sum_{\tau\leq t} \sum_i r_{\tau i} \log y_{\tau i} \\ 
-    &= -\sum_{\tau\leq t} \sum_i r_{\tau i} 
-        \log\left(
-            \softmax\left(
-                \mathbf{v}_t^i \mathbf{h}_t^l
-            \right)
-        \right) \\
-    &= -\sum_{\tau\leq t} \sum_i r_{\tau i} 
-        \log\left(
-            \softmax\left(
-                \sum_{j=0}^d v_{tij} h_{tLj}
-            \right)
-        \right) \\
-    &= -\sum_{\tau\leq t} \sum_i r_{\tau i} 
-        \log\left(
-            \softmax\left(
-                \sum_{j=0}^d v_{tij} \phi^{(L)}h_{tLj}
-            \right)
-        \right)
-    % \frac{\partial L_t}{\partial w_{tlj}} =
-    % \frac{\partial L_t}{\partial y_{tlj}}
-    % \frac{\partial L_t}{\partial w_{tlj}}
-    % \frac{\partial L_t}{\partial w_{tlj}} 
-\end{align}

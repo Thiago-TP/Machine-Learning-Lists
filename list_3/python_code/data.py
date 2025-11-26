@@ -109,6 +109,7 @@ def prepare_data(
 
     # Remove highly correlated features from samples
     hcp = highly_correlated_pairs(x, threshold=correlation_threshold)
+    print(hcp)
     x_f = x.drop(columns=hcp["x2"].unique())
 
     # Plot correlations before and after filtering

@@ -104,6 +104,7 @@ class GenericClassifier(ABC):
         for filename, func in plots.items():
             func(study)  # creates plot Axes object
             plt.savefig(out / filename, bbox_inches="tight", pad_inches=0)
+            plt.close()
 
         print(f"[Optuna] Saved visualizations to: {out.absolute()}")
 
@@ -120,7 +121,7 @@ class GenericClassifier(ABC):
             test_preds = test_preds.argmax(axis=1)
 
         disp = ConfusionMatrixDisplay.from_predictions(
-            self.context.y_test, test_preds, cmap=cmap, colorbar=False
+            self.context.y_test, test_preds, cmap=cmap, colorbar=False, normalize=True
         )
         disp.ax_.set_title(self.name.upper() + " Confusion Matrix")
         plt.savefig(
@@ -128,6 +129,7 @@ class GenericClassifier(ABC):
             bbox_inches="tight",
             pad_inches=0,
         )
+        plt.close()
 
 
 class KerasClassifier(GenericClassifier):
@@ -143,9 +145,6 @@ class KerasClassifier(GenericClassifier):
             "h_activation": "relu",  # hidden layers' activation function
             "hidden_layer_width": 64,  # default width of a hidden layer
             "loss": "sparse_categorical_crossentropy",  # loss function
-            "learn_rate": 0.001,  # base learning rate
-            "learn_rate_schedule": "constant",  # "constant", "exp_decay", "cosine_decay"
-            "metrics": ("accuracy",),  # metrics to consider
             "n_hidden_layers": 32,  # default number of hidden layers
             "optimizer": "adam",  # gradient descent optimizer
             "output_activation": "softmax",  # output activation function

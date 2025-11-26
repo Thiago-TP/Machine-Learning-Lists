@@ -1,6 +1,216 @@
 \section{Question 2}
-Train and evaluate a Decision Tree on the same classification problem chosen in Question 1. 
+Train and evaluate a Decision Tree (DT) on the same classification problem chosen in Question 1. 
 Present the resulting tree (depth, rule-based description) 
 and compare its performance with the results obtained in Question 1.
 
 \noindent\rule{\textwidth}{.5pt}
+
+\noindent\textbf{Dataset description.}
+    The dataset chosen is Michael J. Fox Foundation's Parkinson's Progression Markers Initiative (PPMI)
+    bank of raw sequencing reads from blood samples.
+    %
+    Over 4000 participants have had their RNA transcripted across several visits,
+    and the result of this analysis bundled with other categorical variables 
+    (such as age, gender, race, etc.) to form the PPMI dataset.
+    %
+    As a dataset designed for the study of Parkinson Disease (PD) prediction and identification,
+    each patient falls under one of three classes:
+    %
+    \begin{multicols}{3}
+        \begin{itemize}
+            \item ``0''/``Case'' if with PD
+            \item ``1''/``Control'' if healthy
+            \item ``2''/``Other'' if prodromal
+        \end{itemize}        
+    \end{multicols}
+
+    Of the original 56 columns in the CSV of PPMI patient metadata (\texttt{meta\_data11192021.csv}), 
+    4 are diagnostic labels, and 32 were dropped from consideration due to one or more of the following: 
+    %
+    \begin{enumerate}
+        \item [(i)] redundancy (e.g., ``Age (Bin)'', ``Age at diagnosis'');
+        \item [(ii)] could not contribute to the cause of PD (e.g., ``Month'' of visit, ``Plate'' of the sample);
+        \item [(iii)] are patient identifiers (e.g., ``HudAlphaSampleName'', ``PATNO'');
+        \item [(iv)] were sparsely present across samples (e.g., ``Neutrophil Score'', UPDRS scores).
+    \end{enumerate}
+
+    As such, each sample from the dataset consists of 20 features.    
+    From this subset of data, features with correlation greater than or equal to 90\% (in absolute value) were dropped.
+    E.g., if feature ``A'' showed correlation 0.93 with feature ``B'', 
+    then either ``B'' or ``A'' is dropped, whichever is further at the right in the CSV file.
+    Categorical features are first mapped to integers before calculating correlations.
+    
+    After the removal of highly-correlated features, the samples are shuffled 
+    and finally separated into training, validation, and test sets 
+    in splits of 70\%, 15\% and 15\%, respectively.
+    
+    \Cref{tab:data_ppmi} profiles the sets obtained from the preprocessing of PPMI.
+    \Cref{fig:data_preprocessing} shows a flowchart of the preprocessing done to data. 
+    \Cref{fig:correlations_ppmi} shows the correlation matrix of the PPMI dataset.
+    Since no correlation is bigger than 0.9 in absolute value, all 20 features were kept.
+    
+    \begin{table}[hbp]
+        \centering
+        \caption{Results from PPMI data preprocessing.}
+        \label{tab:data_ppmi}
+        \begin{tabular}{l rr rr rr}
+        \toprule
+            \multicolumn{1}{c}{\multirow{2}{*}{Class}}
+            & \multicolumn{6}{c}{Absolute and relative amounts within split} \\
+        \cmidrule{2-7}
+            & \multicolumn{2}{c}{Train} 
+            & \multicolumn{2}{c}{Validation} 
+            & \multicolumn{2}{c}{Test} \\
+        \midrule
+            0 (PD) 
+                & 1352 & 58.83\% 
+                &  321 & 65.24\% 
+                &  300 & 60.85\% \\
+            1 (Healthy)
+                & 843 & 36.68\% 
+                & 156 & 31.71\% 
+                & 172 & 34.89\% \\
+            2 (Prodromal)
+                & 103 & 4.48\% 
+                & 15 & 3.05\% 
+                & 21 & 4.26\% \\
+        \midrule 
+        \multicolumn{1}{c}{Samples}
+                & 2298 & 70.00\%
+                & 492 & 14.99\%
+                & 493 & 15.01\% \\
+        \bottomrule
+        \end{tabular}
+    \end{table}
+    
+    \clearpage
+    \begin{figure}[htbp]
+        \centering
+        \caption{Steps taken in this work to prepare data for machine learning algorithms.}
+        \label{fig:data_preprocessing}
+        \input{figures/flowchart-preprocessing.tex}
+    \end{figure}
+    %
+    \begin{figure}[h!]
+        \centering
+        \caption{Feature correlations found in a subset of PPMI.}
+        \label{fig:correlations_ppmi}
+        \includegraphics[width=15cm]{../../python_code/plots/filtered_correlations_meta_data.11192021.pdf}
+    \end{figure}
+
+    Visit 
+    \url{https://www.ppmi-info.org/access-data-specimens/data}
+    for more details on PPMI.
+    %
+    Note that download of the metadata CSV requires applying for the data access.
+
+
+\newpage
+\noindent\textbf{FNN description.}
+The FNN structure was obtained by minimizing validation error rate within a small search space of hyperparamenter values.
+The hyperparameters considered and the associated search space boundaries are shown in \cref{tab:hparams_space_fnn}.
+%
+\begin{table}[h!]
+    \centering
+    \caption{Hyperparameters search space for FNN configuration}
+    \label{tab:hparams_space_fnn}
+    \begin{tabular}{cc}
+        \toprule
+            a & b \\
+        \midrule
+            c & d \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+More precisely, the validation error corresponds to 
+the number of wrong predictions made on the validation samples divided by the number of validation samples.
+
+To find the point of minimum validation error within the hyperparameter space, the Optuna framework was used.
+This tool picks a subspace of the previously defined search space, samples hyperparameters from it, and evaluates the model using those values.
+The exploration of the subspace as a whole is called trial, and the model evaluations within a trial, steps.  
+Trials are repeated arbitrarily, and their results are saved to guide following searches, 
+with unpromising trials were stopped (pruned) early.
+
+The best FNN (i.e., the one with smallest validation error) has the parameters presented in \cref{tab:hparams_best_fnn}.
+\Cref{fig:fnn} illustrates this network.
+
+\begin{table}[h!]
+    \centering
+    \caption{FNN hyperparameters that minimize validation error.}
+    \label{tab:hparams_best_fnn}
+    \begin{tabular}{cc}
+    \toprule
+        a & b \\
+    \midrule
+        c & d \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+\begin{figure}[hb]
+    \centering
+    \caption{FNN with smallest validation error}
+    \label{fig:fnn}
+    % \includegraphics[width=5cm]{../../python_code/plots/fnn/fnn.png}
+\end{figure}
+
+\noindent\textbf{DT description.}
+The DT's structure was obtained in the same fashion as the FNN's, that is,
+by minimizing validation error on a hyperparameter space.
+%
+The hyperparameters considered and the associated search space boundaries are shown in \cref{tab:hparams_space_dt}.
+%
+The best FNN (i.e., the one with smallest validation error) has the parameters presented in \cref{tab:hparams_best_dt}.
+\Cref{fig:dt} illustrates this network.
+%
+\begin{table}[h!]
+    \centering
+    \caption{Hyperparameters search space for DT configuration}
+    \label{tab:hparams_space_dt}
+    \begin{tabular}{cc}
+        \toprule
+            a & b \\
+        \midrule
+            c & d \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+%
+\begin{table}[h!]
+    \centering
+    \caption{DT hyperparameters that minimize validation error.}
+    \label{tab:hparams_best_dt}
+    \begin{tabular}{cc}
+    \toprule
+        a & b \\
+    \midrule
+        c & d \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+%
+\begin{figure}[hb]
+    \centering
+    \caption{DT with smallest validation error}
+    \label{fig:dt}
+    % \includegraphics[width=5cm]{../../python_code/plots/dt/dt.png}
+\end{figure}
+
+\newpage
+\noindent\textbf{Performance comparison.}
+
+\begin{figure}[ht!]
+    \centering
+    \caption{Confusion matrices of best FNN and DT architectures.}
+    \label{fig:confusion_matrices_fnn_dt}
+    \begin{subfigure}{.49\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../../python_code/plots/fnn/confusion_matrix.pdf}
+    \end{subfigure}
+    %
+    \begin{subfigure}{.49\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../../python_code/plots/fnn/confusion_matrix.pdf}
+    \end{subfigure}
+\end{figure}

@@ -1,0 +1,16 @@
+\begin{tikzpicture}[> = latex]
+    \node [startstop] (start) at (0, 0) {Start};
+    \node [io, below=1 of start] (1) {Raw data};
+    \node [process, right=1 of 1] (2) {Drop non-relevant features};
+    \node [process, above=1 of 2] (3) {Drop highly correlated features};
+    \node [process, right=1 of 3] (4) {Shuffle sample order};
+    \node [io, below=1 of 4] (5) {Train-validation-test split};
+    \node [startstop, right=1 of 5] (stop) {Stop};
+
+    \draw [->] (start) -- (1);
+    \draw [->] (1) -- (2);
+    \draw [->] (2) -- (3);
+    \draw [->] (3) -- (4);
+    \draw [->] (4) -- (5);
+    \draw [->] (5) -- (stop);
+\end{tikzpicture}

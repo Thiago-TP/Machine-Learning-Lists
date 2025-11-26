@@ -10,24 +10,6 @@ class FeedForwardNeuralNetworkWrapper(KerasClassifier):
     def __init__(self, context: DataContext, name: str):
         super().__init__(context, name)
 
-    def build_learning_rate_schedule(self):
-        if self.params["learn_rate_schedule"] == "constant":
-            return self.params["learn_rate"]
-
-        elif self.params["learn_rate_schedule"] == "exp_decay":
-            return optimizers.schedules.ExponentialDecay(
-                initial_learning_rate=self.params["learn_rate"],
-                decay_steps=100,
-                decay_rate=0.96,
-                staircase=True,
-            )
-
-        elif self.params["learn_rate_schedule"] == "cosine_decay":
-            return optimizers.schedules.CosineDecay(
-                initial_learning_rate=self.params["learn_rate"],
-                decay_steps=self.params["epochs"] * 50,
-            )
-
         raise ValueError(
             f"Unknown learn_rate_schedule: {self.params["learn_rate_schedule"]}"
         )
@@ -75,16 +57,11 @@ class FeedForwardNeuralNetworkWrapper(KerasClassifier):
         )
 
         # Compiling with learning rate schedule
-        lr_schedule = self.build_learning_rate_schedule()
-        if self.params["optimizer"] == "adam":
-            optimizer = optimizers.Adam(learning_rate=lr_schedule)
-        else:
-            optimizer = optimizers.SGD(learning_rate=lr_schedule)
+        optimizer = optimizers.Adam() if self.params["optimizer"] == "adam" else optimizer = optimizers.SGD()
 
         model.compile(
             optimizer=optimizer,
             loss=self.params["loss"],
-            metrics=list(self.params["metrics"]),
         )
 
         with tf.device(self.params["device"]):
