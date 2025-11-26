@@ -1,8 +1,10 @@
 # External libs -> model implementation
 import optuna
-import optuna.visualization as vis
+import optuna.visualization.matplotlib as vis
+import matplotlib.pyplot as plt
 import numpy as np
 from keras import Model
+from sklearn.metrics import ConfusionMatrixDisplay
 
 # Standard libraries -> type annotations and classes
 from typing import Any
@@ -20,23 +22,44 @@ class GenericClassifier(ABC):
         self.params: dict[str, Any] = None
 
     def suggest_hyperparams(self, trial: optuna.Trial) -> None:
+        """Suggest hyperparameters for the current Optuna trial."""
         pass
 
     def build(self) -> Any:
+        """
+        Builds the model according to current hyperparameters.
+        Keras/ScikitLearn Model comes out trained.
+        """
         pass
 
     @abstractmethod
     def evaluate(self) -> float:
+        """Calculates model validation inaccuracy to be minimized by Optuna."""
         pass
 
-    def run_optuna(self, n_trials=5, n_steps=10) -> Any:
+    def run_optuna(self, n_trials=1, n_steps=10) -> None:
+        """
+        Run or resume an Optuna hyperparameter optimization study, saving results in HTML plots.
+        Results are stored in an SQLite database file name "optuna_study.db".
 
+        Parameters
+        ---
+        - n_trials: int
+            Number of hyperparameter trials to run.
+        - n_steps: int
+            Number of intermediate evaluation steps per trial.
+
+        Returns
+        ---
+            - None
+        """
         study = optuna.create_study(
             storage="sqlite:///optuna_study.db",  # database with all studies
             study_name=self.name,  # particular model study
             direction="minimize",
             load_if_exists=True,
         )
+        study.set_metric_names(["Validation Inaccuracy"])
 
         def objective(trial: optuna.Trial) -> float:
             # Run intermediate evaluations for trial pruning / comparing
@@ -52,12 +75,11 @@ class GenericClassifier(ABC):
             return intermediate_values[-1]
 
         study.optimize(objective, n_trials=n_trials)  # run optimization
-        self.save_optuna_visualizations(study)  # save visualizations
-        self.params.update(study.best_params)  # update params with best found
-        return self.build()  # returns ready-to-test model with best params
+        self.plot_confusion_matrix(study)  # save test results: confusion matrix
+        self.save_optuna_visualizations(study)  # save Optuna-related visualizations
 
     def save_optuna_visualizations(
-        self, study: optuna.study.Study, output_dir: str = "optuna_plots"
+        self, study: optuna.study.Study, output_dir: str = "plots"
     ) -> None:
         """
         Generate useful visualizations and save them as HTML.
@@ -68,22 +90,44 @@ class GenericClassifier(ABC):
         out.mkdir(exist_ok=True)
 
         plots = {
-            "contour.html": vis.plot_contour(study),
-            "edf.html": vis.plot_edf(study),
-            "intermediate_values.html": vis.plot_intermediate_values(study),
-            "optimization_history.html": vis.plot_optimization_history(study),
-            "parallel_coordinate.html": vis.plot_parallel_coordinate(study),
-            "param_importances.html": vis.plot_param_importances(study),
-            "rank.html": vis.plot_rank(study),
-            "slice.html": vis.plot_slice(study),
-            "terminator_improvement.html": vis.plot_terminator_improvement(study),
-            "timeline.html": vis.plot_timeline(study),
+            "contour.pdf": vis.plot_contour,
+            "edf.pdf": vis.plot_edf,
+            "intermediate_values.pdf": vis.plot_intermediate_values,
+            "optimization_history.pdf": vis.plot_optimization_history,
+            "parallel_coordinate.pdf": vis.plot_parallel_coordinate,
+            "param_importances.pdf": vis.plot_param_importances,
+            "rank.pdf": vis.plot_rank,
+            "slice.pdf": vis.plot_slice,
+            "terminator_improvement.pdf": vis.plot_terminator_improvement,
         }
 
-        for filename, fig in plots.items():
-            fig.write_html(out / filename)
+        for filename, func in plots.items():
+            func(study)  # creates plot Axes object
+            plt.savefig(out / filename, bbox_inches="tight", pad_inches=0)
 
         print(f"[Optuna] Saved visualizations to: {out.absolute()}")
+
+    def plot_confusion_matrix(
+        self, study: optuna.study.Study, output_dir: str = "plots", cmap=plt.cm.Blues
+    ) -> None:
+        """
+        Plot confusion matrix on test data using the best model from validation evaluation.
+        An Optuna study must have been ran beforehand to set best hyperparameters.
+        """
+        self.params.update(study.best_params)
+        test_preds = self.build().predict(self.context.x_test)
+        if test_preds.ndim > 1:  # convert one-hot outputs (Keras standard) to integers
+            test_preds = test_preds.argmax(axis=1)
+
+        disp = ConfusionMatrixDisplay.from_predictions(
+            self.context.y_test, test_preds, cmap=cmap, colorbar=False
+        )
+        disp.ax_.set_title(self.name.upper() + " Confusion Matrix")
+        plt.savefig(
+            f"{output_dir}/{self.name}/confusion_matrix.pdf",
+            bbox_inches="tight",
+            pad_inches=0,
+        )
 
 
 class KerasClassifier(GenericClassifier):

@@ -7,6 +7,8 @@ from dataclasses import dataclass
 
 import matplotlib.pyplot as plt
 
+from pathlib import Path
+
 
 @dataclass
 class DataContext:
@@ -112,8 +114,13 @@ def prepare_data(
     # Plot correlations before and after filtering
     # May take a while to finish for large datasets
     if plot_corr:
-        plot_correlations(x, path + "original_correlations.pdf", figsize=(20, 20))
-        plot_correlations(x_f, path + "filtered_correlations.pdf", figsize=(20, 20))
+        name = csv_name.removesuffix(".csv")
+        plot_correlations(
+            x, f"plots/original_correlations_{name}.pdf", figsize=(20, 20)
+        )
+        plot_correlations(
+            x_f, f"plots/filtered_correlations_{name}.pdf", figsize=(20, 20)
+        )
 
     # Log effects of correlation filtering
     num_classes = np.max(y) + 1

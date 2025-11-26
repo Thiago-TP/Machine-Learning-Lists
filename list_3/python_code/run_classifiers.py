@@ -1,4 +1,12 @@
-from optuna import load_study
+"""This script runs an Optuna hyperparameter optimization study for multiple classifiers.
+Each classifier wrapper implements its own hyperparameter suggestions and evaluation methods.
+Results are saved in an SQLite database and visualizations/confusion matrices are saved as PDF files.
+Classifiers included:
+    - Feed-Forward Neural Network (FNN) for multiclass classification (PPMI dataset)
+    - Decision Tree (DT) for multiclass classification (PPMI dataset)
+    - Support Vector Machine (SVM) for binary classification (Parkinson's Detection dataset)
+"""
+
 from os import environ
 
 environ["TF_ENABLE_ONEDNN_OPTS"] = "0"  # turn off oneDNN custom operations
@@ -21,32 +29,7 @@ if __name__ == "__main__":
     dt = DecisionTreeWrapper(context_multiclass, "dt")  # question 2
     svm = SupportVectorMachineWrapper(context_binaryclass, "svm")  # question 3
 
-    # Whether Optuna should run.
-    # If not, there should already be a study saved.
-    # If a study already exists, running Optuna again will continue it.
-    run_optuna = True
-
-    # Run each model (train, validation, and test)
-    for model, n_trials in zip([dt, svm, fnn], [25, 25, 25]):
+    # Initiate or expand upon existing Optuna study
+    for model in [dt, svm, fnn]:
         print(f"--- {model.name.upper()} Classifier ---")
-
-        # Start or resume Optuna study
-        if run_optuna:
-            best_model = model.run_optuna(n_trials=n_trials)
-
-        # Load best model from existing study
-        else:
-            study = load_study(
-                storage="sqlite:///optuna_study.db",  # database with all studies
-                study_name=model.name,  # particular model study
-            )
-            model.params.update(study.best_params)
-            best_model = model.build()
-
-        # Test the best model (predict is shared by Keras and Sklearn)
-        test_preds = best_model.predict(model.context.x_test)
-        if test_preds.ndim > 1:  # convert one-hot outputs to intergers
-            test_preds = test_preds.argmax(axis=1)
-
-        test_accuracy = sum(test_preds == model.context.y_test) / len(test_preds)
-        print(f"[Test] Accuracy: {100 * test_accuracy:.2f}%\n")
+        model.run_optuna()

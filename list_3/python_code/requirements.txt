@@ -4,3 +4,4 @@ pydot==4.0.1
 scikit-learn==1.7.2
 seaborn==0.13.2
 tensorflow_cpu==2.20.0
+torch==2.9.1
