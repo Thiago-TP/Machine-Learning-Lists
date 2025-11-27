@@ -9,10 +9,19 @@ from data import DataContext
 class FeedForwardNeuralNetworkWrapper(KerasClassifier):
     def __init__(self, context: DataContext, name: str):
         super().__init__(context, name)
-
-        raise ValueError(
-            f"Unknown learn_rate_schedule: {self.params["learn_rate_schedule"]}"
-        )
+        self.params = {
+            "batch_norm": True,  # apply batch normalization after layer
+            "batch_size": 32,  # minibatch size
+            "device": "/CPU:0",
+            "dropout_rate": 0.0,  # dropout between layers
+            "epochs": 15,  # number of epochs
+            "h_activation": "relu",  # hidden layers' activation function
+            "hidden_layer_width": 64,  # default width of a hidden layer
+            "loss": "sparse_categorical_crossentropy",  # loss function
+            "n_hidden_layers": 32,  # default number of hidden layers
+            "optimizer": "adam",  # gradient descent optimizer
+            "output_activation": "softmax",  # output activation function
+        }
 
     def suggest_hyperparams(self, trial: optuna.Trial) -> None:
         self.params.update(
@@ -57,7 +66,11 @@ class FeedForwardNeuralNetworkWrapper(KerasClassifier):
         )
 
         # Compiling with learning rate schedule
-        optimizer = optimizers.Adam() if self.params["optimizer"] == "adam" else optimizer = optimizers.SGD()
+        optimizer = (
+            optimizers.Adam()
+            if self.params["optimizer"] == "adam"
+            else optimizers.SGD()
+        )
 
         model.compile(
             optimizer=optimizer,

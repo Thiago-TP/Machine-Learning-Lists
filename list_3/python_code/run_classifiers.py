@@ -1,6 +1,6 @@
 """This script runs an Optuna hyperparameter optimization study for multiple classifiers.
-Each classifier wrapper implements its own hyperparameter suggestions and evaluation methods.
-Results are saved in an SQLite database and visualizations/confusion matrices are saved as PDF files.
+Each classifier wrapper implements its own hyperparameter suggestions and evaluation method.
+Results are saved in an SQLite database from which visualizations/confusion matrices can be made later.
 Classifiers included:
     - Feed-Forward Neural Network (FNN) for multiclass classification (PPMI dataset)
     - Decision Tree (DT) for multiclass classification (PPMI dataset)
@@ -32,4 +32,4 @@ if __name__ == "__main__":
     # Initiate or expand upon existing Optuna study
     for model in [dt, svm, fnn]:
         print(f"--- {model.name.upper()} Classifier ---")
-        model.run_optuna()
+        model.run_optuna(n_trials=100)

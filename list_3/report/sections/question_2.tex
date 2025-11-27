@@ -51,7 +51,9 @@ and compare its performance with the results obtained in Question 1.
     
     \begin{table}[hbp]
         \centering
-        \caption{Results from PPMI data preprocessing.}
+        \caption{
+            PPMI train-validation-test splits. 
+            Randomizer seed was fixed at 242104677.}
         \label{tab:data_ppmi}
         \begin{tabular}{l rr rr rr}
         \toprule
@@ -86,7 +88,9 @@ and compare its performance with the results obtained in Question 1.
     \clearpage
     \begin{figure}[htbp]
         \centering
-        \caption{Steps taken in this work to prepare data for machine learning algorithms.}
+        \caption{
+            Steps taken in this work to prepare data for machine learning algorithms.
+        }
         \label{fig:data_preprocessing}
         \input{figures/flowchart-preprocessing.tex}
     \end{figure}
@@ -95,7 +99,7 @@ and compare its performance with the results obtained in Question 1.
         \centering
         \caption{Feature correlations found in a subset of PPMI.}
         \label{fig:correlations_ppmi}
-        \includegraphics[width=15cm]{../../python_code/plots/filtered_correlations_meta_data.11192021.pdf}
+        \includegraphics[width=15cm]{../../python_code/plots/original_correlations_meta_data.11192021.pdf}
     \end{figure}
 
     Visit 
@@ -108,19 +112,29 @@ and compare its performance with the results obtained in Question 1.
 \newpage
 \noindent\textbf{FNN description.}
 The FNN structure was obtained by minimizing validation error rate within a small search space of hyperparamenter values.
-The hyperparameters considered and the associated search space boundaries are shown in \cref{tab:hparams_space_fnn}.
+The hyperparameters considered and the associated search space boundaries are shown in \cref{tab:hparams_fnn}'s middle column.
 %
-\begin{table}[h!]
+\begin{table}[!h]
     \centering
-    \caption{Hyperparameters search space for FNN configuration}
-    \label{tab:hparams_space_fnn}
-    \begin{tabular}{cc}
+    \begin{threeparttable}
+    \caption{FNN hyperparameters.}
+    \label{tab:hparams_fnn}
+    \begin{tabular}{ccc}
         \toprule
-            a & b \\
+            Hyperparameter & Possible values & Best after 100 trials \\
         \midrule
-            c & d \\
+            Dropout rate & $[0, 0.5]$ & 12.73\% \\
+            Hidden layers' activation function & ReLU$^*$ or sigmoid & sigmoid \\
+            Hiddden layers' width & $\{1, 2, \dots, 8\}$ & 8 \\
+            Number of hidden layers & $\{1, 2, \dots, 8\}$ & 2 \\
+            Learning rate$^{**}$ & $[10^{-4}, 10^{-2}]$ & $2.18 \times 10^{-4}$\\
         \bottomrule
     \end{tabular}
+    \begin{tablenotes}
+        \item $^*$ Rectified Linear Unit, $f(x) = \max(0, x)$ 
+        \item $^{**}$ Sampled from the log domain
+    \end{tablenotes}
+\end{threeparttable}
 \end{table}
 
 More precisely, the validation error corresponds to 
@@ -132,75 +146,51 @@ The exploration of the subspace as a whole is called trial, and the model evalua
 Trials are repeated arbitrarily, and their results are saved to guide following searches, 
 with unpromising trials were stopped (pruned) early.
 
-The best FNN (i.e., the one with smallest validation error) has the parameters presented in \cref{tab:hparams_best_fnn}.
+The FNN with smallest validation error, 29.67\%, has the parameters presented in \cref{tab:hparams_fnn}'s right column.
 \Cref{fig:fnn} illustrates this network.
-
-\begin{table}[h!]
-    \centering
-    \caption{FNN hyperparameters that minimize validation error.}
-    \label{tab:hparams_best_fnn}
-    \begin{tabular}{cc}
-    \toprule
-        a & b \\
-    \midrule
-        c & d \\
-    \bottomrule
-    \end{tabular}
-\end{table}
+Trials used 15 epochs, 32 batch size, and the Adam optimizer from the Keras Python library for gradient descent calculation;
+all neural networks considered also had batch normalization between layers.
 
 \begin{figure}[hb]
     \centering
-    \caption{FNN with smallest validation error}
+    \caption{FNN with smallest validation error after 100 trials.}
     \label{fig:fnn}
-    % \includegraphics[width=5cm]{../../python_code/plots/fnn/fnn.png}
+    \includegraphics[width=5cm]{../../python_code/plots/fnn/best_model.pdf}
 \end{figure}
 
 \noindent\textbf{DT description.}
 The DT's structure was obtained in the same fashion as the FNN's, that is,
 by minimizing validation error on a hyperparameter space.
 %
-The hyperparameters considered and the associated search space boundaries are shown in \cref{tab:hparams_space_dt}.
+The hyperparameters considered and the associated search space boundaries are shown in \cref{tab:hparams_dt}.
 %
-The best FNN (i.e., the one with smallest validation error) has the parameters presented in \cref{tab:hparams_best_dt}.
+The best DT with smallest validation error, 30.69\%, has the parameters presented in \cref{tab:hparams_dt}.
 \Cref{fig:dt} illustrates this network.
 %
-\begin{table}[h!]
+\begin{table}[!h]
     \centering
-    \caption{Hyperparameters search space for DT configuration}
-    \label{tab:hparams_space_dt}
-    \begin{tabular}{cc}
+    \caption{DT hyperparameters.}
+    \label{tab:hparams_dt}
+    \begin{tabular}{ccc}
         \toprule
-            a & b \\
+            Hyperparameter & Possible values & Best after 100 trials \\
         \midrule
-            c & d \\
+            Criterion & Entropy, Gini, or Log-loss & Log-loss \\
+            Maximum depth & $\{2, 3, \dots, 20\}$ & 7\\
         \bottomrule
-    \end{tabular}
-\end{table}
-%
-\begin{table}[h!]
-    \centering
-    \caption{DT hyperparameters that minimize validation error.}
-    \label{tab:hparams_best_dt}
-    \begin{tabular}{cc}
-    \toprule
-        a & b \\
-    \midrule
-        c & d \\
-    \bottomrule
     \end{tabular}
 \end{table}
 %
 \begin{figure}[hb]
     \centering
-    \caption{DT with smallest validation error}
+    \caption{DT with smallest validation error after 100 trials.}
     \label{fig:dt}
-    % \includegraphics[width=5cm]{../../python_code/plots/dt/dt.png}
+    \includegraphics[width=\linewidth]{../../python_code/plots/dt/best_model.pdf}
 \end{figure}
 
-\newpage
-\noindent\textbf{Performance comparison.}
 
-\begin{figure}[ht!]
+\noindent\textbf{Performance comparison.}
+\begin{figure}[!ht]
     \centering
     \caption{Confusion matrices of best FNN and DT architectures.}
     \label{fig:confusion_matrices_fnn_dt}
@@ -211,6 +201,6 @@ The best FNN (i.e., the one with smallest validation error) has the parameters p
     %
     \begin{subfigure}{.49\textwidth}
         \centering
-        \includegraphics[width=\linewidth]{../../python_code/plots/fnn/confusion_matrix.pdf}
+        \includegraphics[width=\linewidth]{../../python_code/plots/dt/confusion_matrix.pdf}
     \end{subfigure}
 \end{figure}

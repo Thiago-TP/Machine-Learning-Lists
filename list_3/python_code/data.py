@@ -4,13 +4,10 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from dataclasses import dataclass
-
 import matplotlib.pyplot as plt
 
-from pathlib import Path
 
-
-@dataclass
+@dataclass(frozen=True)
 class DataContext:
     x_train: np.ndarray
     y_train: np.ndarray
@@ -20,6 +17,8 @@ class DataContext:
     y_test: np.ndarray
     num_features: int
     num_classes: int
+    feature_names: tuple[str]
+    class_names: tuple[str]
 
 
 def highly_correlated_pairs(
@@ -51,17 +50,30 @@ def plot_correlations(
     samples: pd.DataFrame,
     save_path: str,
     figsize: tuple[int, int] = (20, 20),
+    fontsize: int | None = None,
     hmap_kwargs: dict[str, Any] = {
         "annot": True,
         "cmap": "coolwarm",
+        "cbar": False,
         "center": 0,
         "square": True,
         "fmt": ".2f",
     },
 ):
     """Plot and save a heatmap of the Pearson correlations between features in samples."""
+    hmap_kwargs.update({"annot_kws": {"fontsize": fontsize}})
     _, ax = plt.subplots(figsize=figsize)
     sns.heatmap(samples.corr(), ax=ax, **hmap_kwargs)
+    ax.tick_params(axis="x", labelsize=fontsize)
+    ax.tick_params(axis="y", labelsize=fontsize)
+    ax.set_xticklabels(
+        ax.get_xticklabels(), rotation=90, ha="right"
+    )  # ha='right' aligns the text correctly
+    ax.set_yticklabels(
+        ax.get_yticklabels(),
+        rotation=0,
+    )  # ha='right' aligns the text correctly
+
     plt.savefig(save_path, bbox_inches="tight", pad_inches=0)
     plt.clf()
 
@@ -78,6 +90,7 @@ def prepare_data(
     seed: int = 242104677,
     plot_corr: bool = False,
     summary: bool = False,
+    verbose: bool = False,
 ) -> DataContext:
     """
     Prepare data for classification tasks by loading a CSV into a DataContext object. Features are removed if highly correlated.
@@ -100,28 +113,24 @@ def prepare_data(
         pd.read_csv(path + csv_name, skiprows=skiprows)
         .drop(columns=drop_columns)
         .dropna()
-        .apply(lambda x: pd.factorize(x)[0] if x.dtype == "object" else x)
-        .reset_index(drop=True)
     )
+    data_num = data.apply(
+        lambda x: pd.factorize(x)[0] if x.dtype == "object" else x
+    ).reset_index(drop=True)
 
     # Parse raw data into samples and labels
-    x, y = data.drop(columns=[label_column]), data[[label_column]]
+    x, y = data_num.drop(columns=[label_column]), data_num[[label_column]]
 
     # Remove highly correlated features from samples
     hcp = highly_correlated_pairs(x, threshold=correlation_threshold)
-    print(hcp)
     x_f = x.drop(columns=hcp["x2"].unique())
 
     # Plot correlations before and after filtering
     # May take a while to finish for large datasets
     if plot_corr:
         name = csv_name.removesuffix(".csv")
-        plot_correlations(
-            x, f"plots/original_correlations_{name}.pdf", figsize=(20, 20)
-        )
-        plot_correlations(
-            x_f, f"plots/filtered_correlations_{name}.pdf", figsize=(20, 20)
-        )
+        plot_correlations(x, f"plots/original_correlations_{name}.pdf", fontsize=16)
+        plot_correlations(x_f, f"plots/filtered_correlations_{name}.pdf", fontsize=24)
 
     # Log effects of correlation filtering
     num_classes = np.max(y) + 1
@@ -138,6 +147,9 @@ def prepare_data(
     train_size = int(train_split * num_samples)
     val_size = int(validation_split * num_samples)
 
+    feature_names = x_f.columns
+    class_names = data[label_column].unique()
+
     context = DataContext(
         x_train=x_shuffled[:train_size],
         y_train=y_shuffled[:train_size],
@@ -147,17 +159,19 @@ def prepare_data(
         y_test=y_shuffled[train_size + val_size :],
         num_features=num_features,
         num_classes=num_classes,
+        feature_names=tuple(feature_names),
+        class_names=tuple(class_names),
     )
 
     if summary:
-        write_filtering_info(x, context, hcp)
+        write_filtering_info(x, context, hcp, verbose=verbose)
         write_label_info(context)
 
     return context
 
 
 def write_filtering_info(
-    x: pd.DataFrame, context: DataContext, hcp: pd.DataFrame
+    x: pd.DataFrame, context: DataContext, hcp: pd.DataFrame, verbose: bool = False
 ) -> None:
 
     print("=== CORRELATION FILTERING SUMMARY ===")
@@ -167,12 +181,19 @@ def write_filtering_info(
     print(f"- Original features: {x.shape[1]}")
     print(f"- Removed features: {x.shape[1] - context.num_features}")
     print(f"- Reduction: {100 * (1 - context.num_features / x.shape[1]):.2f}%")
-    print(f"- Removed features:")
+    print("- Removed features:")
     if not hcp.empty:
         for feature in sorted(hcp["x2"].unique()):
             print(f"\t- {feature}")
     else:
         print("\t- None")
+
+    if verbose:
+        print("[Verbose on] Pairwise correlations above threshold:")
+        if hcp.empty:
+            print("\t- None")
+        else:
+            print(hcp)
     print("=====================================\n")
 
 
@@ -196,10 +217,12 @@ def write_label_info(context: DataContext):
 
 
 def load_parkinson_detection(
-    plot_corr: bool = False, summary: bool = False
+    plot_corr: bool = False, summary: bool = False, verbose: bool = False
 ) -> DataContext:
     # Oxford Parkinson's Disease Detection Dataset
     # https://archive.ics.uci.edu/dataset/174/parkinsons
+    if verbose:
+        print("[Verbose on] Preparing Parkinson Detection dataset...")
     return prepare_data(
         path="./data/binary_classification/",
         csv_name="parkinsons.csv",
@@ -207,12 +230,17 @@ def load_parkinson_detection(
         label_column="status",  # 1 for PD, 0 for healthy
         plot_corr=plot_corr,
         summary=summary,
+        verbose=verbose,
     )
 
 
-def load_ppmi(plot_corr: bool = False, summary: bool = False) -> DataContext:
+def load_ppmi(
+    plot_corr: bool = False, summary: bool = False, verbose: bool = False
+) -> DataContext:
     # PPMI multiclass classification dataset
     # https://www.ppmi-info.org/access-data-specimens/download-data
+    if verbose:
+        print("[Verbose on] Preparing PPMI dataset...")
     return prepare_data(
         path="./data/multiclass_classification/",
         csv_name="meta_data.11192021.csv",
@@ -257,6 +285,7 @@ def load_ppmi(plot_corr: bool = False, summary: bool = False) -> DataContext:
         label_column="Case Control",  # strictly multiclass ("Case", "Control", "Other")
         plot_corr=plot_corr,
         summary=summary,
+        verbose=verbose,
     )
 
 
@@ -264,6 +293,6 @@ def load_ppmi(plot_corr: bool = False, summary: bool = False) -> DataContext:
 
 
 if __name__ == "__main__":
-    # Test loading functions
-    _ = load_parkinson_detection(plot_corr=True, summary=True)
-    _ = load_ppmi(plot_corr=True, summary=True)
+    # Test loading functions and write results out
+    _ = load_ppmi(plot_corr=True, summary=True, verbose=True)
+    _ = load_parkinson_detection(plot_corr=True, summary=True, verbose=True)

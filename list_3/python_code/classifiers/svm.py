@@ -7,23 +7,7 @@ from classifiers.generic_classifiers import SkLearnClassifier
 class SupportVectorMachineWrapper(SkLearnClassifier):
     def __init__(self, context: DataContext, name: str):
         super().__init__(context, name)
-        self.params = {
-            "break_ties": False,
-            "C": 1,
-            "cache_size": 200,
-            "class_weight": None,
-            "coef0": 0.0,
-            "decision_function_shape": "ovr",
-            "degree": 3,
-            "gamma": "scale",
-            "kernel": "rbf",
-            "max_iter": -1,
-            "probability": False,
-            "random_state": 242104677,
-            "shrinking": True,
-            "tol": 1e-3,
-            "verbose": False,
-        }
+        self.params = {"C": 1, "coef0": 0.0, "degree": 3, "kernel": "rbf"}
 
     def suggest_hyperparams(self, trial: optuna.Trial):
         args = {

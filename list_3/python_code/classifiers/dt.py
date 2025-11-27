@@ -1,5 +1,6 @@
 import optuna
 from sklearn.tree import DecisionTreeClassifier
+
 from data import DataContext
 from classifiers.generic_classifiers import SkLearnClassifier
 
@@ -10,7 +11,6 @@ class DecisionTreeWrapper(SkLearnClassifier):
         self.params = {
             "criterion": "gini",
             "max_depth": None,
-            "min_samples_split": 2,
         }
 
     def suggest_hyperparams(self, trial: optuna.Trial) -> None:
@@ -20,7 +20,6 @@ class DecisionTreeWrapper(SkLearnClassifier):
                     "criterion", ["entropy", "gini", "log_loss"]
                 ),
                 "max_depth": trial.suggest_int("max_depth", 2, 20),
-                "min_samples_split": trial.suggest_int("min_samples_split", 2, 20),
             }
         )
 
