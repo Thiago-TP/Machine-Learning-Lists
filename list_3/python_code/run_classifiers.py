@@ -30,6 +30,6 @@ if __name__ == "__main__":
     svm = SupportVectorMachineWrapper(context_binaryclass, "svm")  # question 3
 
     # Initiate or expand upon existing Optuna study
-    for model in [dt, svm, fnn]:
+    for model in [dt, fnn, svm]:
         print(f"--- {model.name.upper()} Classifier ---")
-        model.run_optuna(n_trials=100)
+        model.run_optuna(n_trials=100, database_name="optuna_study.db")

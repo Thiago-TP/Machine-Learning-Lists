@@ -1,16 +1,19 @@
-# External libs -> model implementation
+"""This script plots Optuna optimization results and model structure for best models."""
+
+from typing import Callable
+import os
+
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"  # turn off oneDNN custom operations
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"  # shush TensorFlow initialization messages
+
 import optuna
 import optuna.visualization.matplotlib as vis
 import matplotlib.pyplot as plt
+import keras
 from keras.utils import plot_model
 from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.tree import plot_tree
 
-import os
-from typing import Callable
-
-os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"  # turn off oneDNN custom operations
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"  # shush TensorFlow initialization messages
 
 from classifiers.dt import DecisionTreeWrapper
 from classifiers.fnn import FeedForwardNeuralNetworkWrapper
@@ -42,7 +45,6 @@ def save_optuna_visualizations(
     for filename, func in plots.items():
         func(study)  # creates plot Axes object
         plt.savefig(os.path.join(out, filename), bbox_inches="tight", pad_inches=0)
-        plt.close()
 
 
 def plot_best_fnn(wrapper, study: optuna.study.Study) -> None:
@@ -76,6 +78,7 @@ def plot_confusion_matrix(
     if test_preds.ndim > 1:  # convert one-hot outputs (Keras standard) to integers
         test_preds = test_preds.argmax(axis=1)
 
+    fig, ax = plt.subplots()
     disp = ConfusionMatrixDisplay.from_predictions(
         wrapper.context.y_test, test_preds, cmap=cmap, colorbar=False
     )
@@ -100,7 +103,7 @@ if __name__ == "__main__":
     svm = SupportVectorMachineWrapper(context_binaryclass, "svm")  # question 3
 
     # Initiate or expand upon existing Optuna study
-    for model in [dt, svm, fnn]:
+    for model in [dt, fnn, svm]:
         print(f"--- {model.name.upper()} Classifier ---")
         study = optuna.create_study(
             storage="sqlite:///optuna_study.db",  # database with all studies
@@ -116,9 +119,9 @@ if __name__ == "__main__":
         print(study.best_value)
 
         plot_confusion_matrix(model, study)
-        save_optuna_visualizations(model, study)
+        # save_optuna_visualizations(model, study)
 
-        if isinstance(model, FeedForwardNeuralNetworkWrapper):
-            plot_best_fnn(model, study)
-        elif isinstance(model, DecisionTreeWrapper):
-            plot_best_dt(model, study)
+        # if isinstance(model, FeedForwardNeuralNetworkWrapper):
+        #     plot_best_fnn(model, study)
+        # elif isinstance(model, DecisionTreeWrapper):
+        #     plot_best_dt(model, study)

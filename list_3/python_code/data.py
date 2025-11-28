@@ -49,7 +49,7 @@ def highly_correlated_pairs(
 def plot_correlations(
     samples: pd.DataFrame,
     save_path: str,
-    figsize: tuple[int, int] = (20, 20),
+    figsize: tuple[int, int] = (25, 25),
     fontsize: int | None = None,
     hmap_kwargs: dict[str, Any] = {
         "annot": True,
@@ -85,9 +85,9 @@ def prepare_data(
     drop_columns: Iterable[str] | None = None,
     skiprows: int = 0,
     correlation_threshold: float = 0.9,
-    train_split: float = 0.7,
-    validation_split: float = 0.15,
-    seed: int = 242104677,
+    train_split: float = 0.5,
+    validation_split: float = 0.25,
+    seed: int = 2421,
     plot_corr: bool = False,
     summary: bool = False,
     verbose: bool = False,
@@ -130,7 +130,7 @@ def prepare_data(
     if plot_corr:
         name = csv_name.removesuffix(".csv")
         plot_correlations(x, f"plots/original_correlations_{name}.pdf", fontsize=16)
-        plot_correlations(x_f, f"plots/filtered_correlations_{name}.pdf", fontsize=24)
+        plot_correlations(x_f, f"plots/filtered_correlations_{name}.pdf", fontsize=16)
 
     # Log effects of correlation filtering
     num_classes = np.max(y) + 1
@@ -245,38 +245,29 @@ def load_ppmi(
         path="./data/multiclass_classification/",
         csv_name="meta_data.11192021.csv",
         drop_columns=[  # irrelevant/redundant for classification at hand
-            "HudAlphaSampleName",
-            "Small RNA-Seq",
-            "Long RNA-seq",
-            "PATNO",
-            "PATNO Visit",
-            "PoolAssign",
-            "Phase",
-            "Clinical Event",
-            "Month",
-            "Age (Bin)",
-            "Age at diagnosis",
-            "Box",
-            "Position",
-            "Plate",
-            "Neutrophil Score",
-            "Basophils (%)",
-            "Eosinophils (%)",
-            "Lymphocytes (%)",
-            "Neutrophils (%)",
-            "Neutrophil/Lymphocyte",
-            "RBC Morphology",
-            "Usable Bases (%)",
-            "Multimapped (%)",
-            "Uniquely mapped (%)",
-            "Total reads",
-            "UPDRS1 score",
-            "UPDRS2 score",
-            "UPDRS3 score",
-            "UPDRS4 score",
-            "UPDRS totscore",
-            "UPSIT",
-            "moca",
+            "HudAlphaSampleName",  # sample identifier
+            "Small RNA-Seq",  # no bearing on PD
+            "Long RNA-seq",  # no bearing on PD
+            "PATNO",  # patient identifier (may repeat)
+            "PATNO Visit",  # patient identifier + visit number
+            "QC",  # made correlation calculation unstable
+            "PoolAssign",  # whether sample comes from a patient or some pool
+            "Phase",  # which set of plates the sample comes from
+            "Clinical Event",  # visit ID (included in PATNO Visit)
+            "Month",  # month of the visit
+            "Age (Bin)",  # range where age at consent falls in
+            "Age at diagnosis",  # age when diagnostic was made
+            "Box",  # from which container the sample came from
+            "Position",  # ?
+            "Plate",  # from which plate the sample came from
+            "RBC Morphology",  # all "normocytic"
+            "Usable Bases (%)",  # no bearing on PD
+            "Multimapped (%)",  # no bearing on PD
+            "Uniquely mapped (%)",  # no bearing on PD
+            "Total reads",  # no bearing on PD
+            "UPDRS4 score",  # all NaN
+            "UPDRS totscore",  # the sum of UPDR scores
+            "UPSIT",  # too few samples with it
             # Redundant with "Case Control" label
             "Disease Status",  # strictly multiclass ("PD", "SWEDD", "Healthy Control", etc)
             "Study Arm",  # strictly multiclass ("PD", "SWEDD", "Healthy Control", etc)
@@ -295,4 +286,4 @@ def load_ppmi(
 if __name__ == "__main__":
     # Test loading functions and write results out
     _ = load_ppmi(plot_corr=True, summary=True, verbose=True)
-    _ = load_parkinson_detection(plot_corr=True, summary=True, verbose=True)
+    # _ = load_parkinson_detection(plot_corr=True, summary=True, verbose=True)

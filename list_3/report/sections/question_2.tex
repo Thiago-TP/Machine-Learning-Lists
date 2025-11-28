@@ -25,35 +25,33 @@ and compare its performance with the results obtained in Question 1.
     \end{multicols}
 
     Of the original 56 columns in the CSV of PPMI patient metadata (\texttt{meta\_data11192021.csv}), 
-    4 are diagnostic labels, and 32 were dropped from consideration due to one or more of the following: 
+    4 are diagnostic labels, and 23 were dropped from consideration due to one or more of the following: 
     %
     \begin{enumerate}
         \item [(i)] redundancy (e.g., ``Age (Bin)'', ``Age at diagnosis'');
         \item [(ii)] could not contribute to the cause of PD (e.g., ``Month'' of visit, ``Plate'' of the sample);
         \item [(iii)] are patient identifiers (e.g., ``HudAlphaSampleName'', ``PATNO'');
-        \item [(iv)] were sparsely present across samples (e.g., ``Neutrophil Score'', UPDRS scores).
+        \item [(iv)] were sparsely present across samples (e.g., ``UPSIT'').
     \end{enumerate}
 
-    As such, each sample from the dataset consists of 20 features.    
+    As such, each sample from the dataset consists of 29 features.    
     From this subset of data, features with correlation greater than or equal to 90\% (in absolute value) were dropped.
-    E.g., if feature ``A'' showed correlation 0.93 with feature ``B'', 
-    then either ``B'' or ``A'' is dropped, whichever is further at the right in the CSV file.
-    Categorical features are first mapped to integers before calculating correlations.
     
     After the removal of highly-correlated features, the samples are shuffled 
     and finally separated into training, validation, and test sets 
-    in splits of 70\%, 15\% and 15\%, respectively.
+    in splits of 50\%, 25\% and 25\%, respectively.
     
     \Cref{tab:data_ppmi} profiles the sets obtained from the preprocessing of PPMI.
     \Cref{fig:data_preprocessing} shows a flowchart of the preprocessing done to data. 
     \Cref{fig:correlations_ppmi} shows the correlation matrix of the PPMI dataset.
-    Since no correlation is bigger than 0.9 in absolute value, all 20 features were kept.
+    Since one ``Neutrophils (\%)'' was dropped due to high negative correlation with ``Lymphocytes (\%)'',
+    there are 28 features total instead of 29.
     
     \begin{table}[hbp]
         \centering
         \caption{
             PPMI train-validation-test splits. 
-            Randomizer seed was fixed at 242104677.}
+            Randomizer seed was fixed at 2421.}
         \label{tab:data_ppmi}
         \begin{tabular}{l rr rr rr}
         \toprule
@@ -65,22 +63,22 @@ and compare its performance with the results obtained in Question 1.
             & \multicolumn{2}{c}{Test} \\
         \midrule
             0 (PD) 
-                & 1352 & 58.83\% 
-                &  321 & 65.24\% 
-                &  300 & 60.85\% \\
+                & 183 & 30.30\% 
+                & 100 & 33.11\% 
+                & 112 & 36.96\% \\
             1 (Healthy)
-                & 843 & 36.68\% 
-                & 156 & 31.71\% 
-                & 172 & 34.89\% \\
+                & 416 & 68.87\% 
+                & 200 & 66.23\% 
+                & 189 & 62.38\% \\
             2 (Prodromal)
-                & 103 & 4.48\% 
-                & 15 & 3.05\% 
-                & 21 & 4.26\% \\
+                & 5 & 0.83\% 
+                & 2 & 0.66\% 
+                & 2 & 0.66\% \\
         \midrule 
         \multicolumn{1}{c}{Samples}
-                & 2298 & 70.00\%
-                & 492 & 14.99\%
-                & 493 & 15.01\% \\
+                & 604 & 49.96\%
+                & 302 & 24.98\%
+                & 303 & 25.06\% \\
         \bottomrule
         \end{tabular}
     \end{table}
@@ -99,7 +97,7 @@ and compare its performance with the results obtained in Question 1.
         \centering
         \caption{Feature correlations found in a subset of PPMI.}
         \label{fig:correlations_ppmi}
-        \includegraphics[width=15cm]{../../python_code/plots/original_correlations_meta_data.11192021.pdf}
+        \includegraphics[width=15cm]{../../python_code/plots/filtered_correlations_meta_data.11192021.pdf}
     \end{figure}
 
     Visit 
@@ -111,7 +109,7 @@ and compare its performance with the results obtained in Question 1.
 
 \newpage
 \noindent\textbf{FNN description.}
-The FNN structure was obtained by minimizing validation error rate within a small search space of hyperparamenter values.
+The FNN structure was obtained by minimizing validation error rate within a small search space of hyperparameter values.
 The hyperparameters considered and the associated search space boundaries are shown in \cref{tab:hparams_fnn}'s middle column.
 %
 \begin{table}[!h]
@@ -123,11 +121,10 @@ The hyperparameters considered and the associated search space boundaries are sh
         \toprule
             Hyperparameter & Possible values & Best after 100 trials \\
         \midrule
-            Dropout rate & $[0, 0.5]$ & 12.73\% \\
-            Hidden layers' activation function & ReLU$^*$ or sigmoid & sigmoid \\
-            Hiddden layers' width & $\{1, 2, \dots, 8\}$ & 8 \\
-            Number of hidden layers & $\{1, 2, \dots, 8\}$ & 2 \\
-            Learning rate$^{**}$ & $[10^{-4}, 10^{-2}]$ & $2.18 \times 10^{-4}$\\
+            Hidden layers' activation function & ReLU$^*$ or sigmoid & ReLU \\
+            Hiddden layers' width & $\{1, 2, \dots, 16\}$ & 16 \\
+            Number of hidden layers & $\{1, 2, \dots, 16\}$ & 4 \\
+            Learning rate$^{**}$ & $[10^{-4}, 10^{-2}]$ & $1.88 \times 10^{-3}$\\
         \bottomrule
     \end{tabular}
     \begin{tablenotes}
@@ -146,17 +143,18 @@ The exploration of the subspace as a whole is called trial, and the model evalua
 Trials are repeated arbitrarily, and their results are saved to guide following searches, 
 with unpromising trials were stopped (pruned) early.
 
-The FNN with smallest validation error, 29.67\%, has the parameters presented in \cref{tab:hparams_fnn}'s right column.
+The FNN with smallest validation error, 4.30\%, has the parameters presented in \cref{tab:hparams_fnn}'s right column.
 \Cref{fig:fnn} illustrates this network.
-Trials used 15 epochs, 32 batch size, and the Adam optimizer from the Keras Python library for gradient descent calculation;
-all neural networks considered also had batch normalization between layers.
+Trials used 15 epochs, 32 batch size, and the Adam optimizer from the Keras Python library for gradient descent calculation.
+No dropout or batch normalization was applied due to the relatively small size of the neural network.
 
 \begin{figure}[hb]
     \centering
     \caption{FNN with smallest validation error after 100 trials.}
     \label{fig:fnn}
-    \includegraphics[width=5cm]{../../python_code/plots/fnn/best_model.pdf}
+    \includegraphics[width=.625\linewidth]{fnn.png}
 \end{figure}
+
 
 \noindent\textbf{DT description.}
 The DT's structure was obtained in the same fashion as the FNN's, that is,
@@ -164,7 +162,7 @@ by minimizing validation error on a hyperparameter space.
 %
 The hyperparameters considered and the associated search space boundaries are shown in \cref{tab:hparams_dt}.
 %
-The best DT with smallest validation error, 30.69\%, has the parameters presented in \cref{tab:hparams_dt}.
+The best DT with smallest validation error, 4.97\%, has the parameters presented in \cref{tab:hparams_dt}.
 \Cref{fig:dt} illustrates this network.
 %
 \begin{table}[!h]
@@ -175,32 +173,36 @@ The best DT with smallest validation error, 30.69\%, has the parameters presente
         \toprule
             Hyperparameter & Possible values & Best after 100 trials \\
         \midrule
-            Criterion & Entropy, Gini, or Log-loss & Log-loss \\
-            Maximum depth & $\{2, 3, \dots, 20\}$ & 7\\
+            Criterion & Entropy, Gini, or Log-loss & Entropy \\
+            Maximum depth & $\{2, 3, \dots, 20\}$ & 4\\
         \bottomrule
     \end{tabular}
 \end{table}
-%
+.
+\newpage
 \begin{figure}[hb]
     \centering
     \caption{DT with smallest validation error after 100 trials.}
     \label{fig:dt}
-    \includegraphics[width=\linewidth]{../../python_code/plots/dt/best_model.pdf}
+    \includegraphics[width=.9\textheight, angle=90]{../../python_code/plots/dt/best_model.pdf}
 \end{figure}
 
-
+\clearpage
 \noindent\textbf{Performance comparison.}
+
+For a discussion on Optuna's optimization and its resulting hyperparameters, check the section at the end of this report.
+
 \begin{figure}[!ht]
     \centering
     \caption{Confusion matrices of best FNN and DT architectures.}
     \label{fig:confusion_matrices_fnn_dt}
     \begin{subfigure}{.49\textwidth}
         \centering
-        \includegraphics[width=\linewidth]{../../python_code/plots/fnn/confusion_matrix.pdf}
+        \includegraphics[width=.8\linewidth]{../../python_code/plots/fnn/confusion_matrix.pdf}
     \end{subfigure}
     %
     \begin{subfigure}{.49\textwidth}
         \centering
-        \includegraphics[width=\linewidth]{../../python_code/plots/dt/confusion_matrix.pdf}
+        \includegraphics[width=.8\linewidth]{../../python_code/plots/dt/confusion_matrix.pdf}
     \end{subfigure}
 \end{figure}
