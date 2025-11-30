@@ -122,7 +122,7 @@ The hyperparameters considered and the associated search space boundaries are sh
     \label{tab:hparams_fnn}
     \begin{tabular}{ccc}
         \toprule
-            Hyperparameter & Possible values & Best after 100 trials \\
+            Hyperparameter & Search space & Best after 100 trials \\
         \midrule
             Hidden layers' activation function & ReLU$^*$ or sigmoid & ReLU \\
             Hiddden layers' width & $\{1, 2, \dots, 16\}$ & 16 \\
@@ -174,7 +174,7 @@ The best DT with smallest validation error, 4.97\%, has the parameters presented
     \label{tab:hparams_dt}
     \begin{tabular}{ccc}
         \toprule
-            Hyperparameter & Possible values & Best after 100 trials \\
+            Hyperparameter & Search space & Best after 100 trials \\
         \midrule
             Criterion & Entropy, Gini, or Log-loss & Entropy \\
             Maximum depth & $\{2, 3, \dots, 20\}$ & 4\\

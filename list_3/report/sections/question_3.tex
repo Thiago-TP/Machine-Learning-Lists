@@ -82,15 +82,18 @@ The confusion matrix obtained on the test set from this model is shown in \cref{
     \label{tab:hparams_svm}
     \begin{tabular}{ccc}
         \toprule
-            Hyperparameter & Possible values & Best after 100 trials \\
+            Hyperparameter & Search space & Best after 100 trials \\
         \midrule
             Kernel & Linear, polynomial, RBF$^*$ or sigmoid & RBF \\
             Regularization constant$^{**}$ & $[10^{-1}, 10^3]$ & 17.72\\
+            Degree$^{***}$ & $\{2, 3, 4, 5\}$ & - \\ 
+            Linear coefficient$^{***}$ & $[0, 10]$ & - \\ 
         \bottomrule
     \end{tabular}
     \begin{tablenotes}
         \item $^*$ Radial Basis Function 
         \item $^{**}$ Sampled from the log domain
+        \item $^{***}$ Valid only for the polynomial kernel
     \end{tablenotes}
 \end{threeparttable}
 \end{table}
