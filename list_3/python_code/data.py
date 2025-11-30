@@ -260,8 +260,8 @@ def load_ppmi(
             "Multimapped (%)",  # no bearing on PD
             "Uniquely mapped (%)",  # no bearing on PD
             "Total reads",  # no bearing on PD
-            "UPDRS4 score",  # all NaN
-            "UPDRS totscore",  # the sum of UPDR scores
+            "UPDRS4 score",  # too few samples with it
+            "UPDRS totscore",  # basically the sum of UPDR scores
             "UPSIT",  # too few samples with it
             # Redundant with "Case Control" label
             "Disease Status",  # strictly multiclass ("PD", "SWEDD", "Healthy Control", etc)
