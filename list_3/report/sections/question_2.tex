@@ -53,7 +53,7 @@ and compare its performance with the results obtained in Question 1.
     \begin{table}[hbp]
         \centering
         \caption{
-            PPMI train-validation-test splits. 
+            PPMI splits. 
             Randomizer seed was fixed at 2421.}
         \label{tab:data_ppmi}
         \begin{tabular}{l rr rr rr}
@@ -140,7 +140,7 @@ The hyperparameters considered and the associated search space boundaries are sh
 More precisely, the validation error corresponds to 
 the number of wrong predictions made on the validation samples divided by the number of validation samples.
 
-To find the point of minimum validation error within the hyperparameter space, the Optuna framework was used.
+To find the point of minimum validation error within the hyperparameter space, the \href{https://optuna.org/}{Optuna framework} was used.
 This tool picks a subspace of the previously defined search space, samples hyperparameters from it, and evaluates the model using those values.
 The exploration of the subspace as a whole is called trial, and the model evaluations within a trial, steps.  
 Trials are repeated arbitrarily, and their results are saved to guide following searches, 
@@ -231,11 +231,8 @@ the proposed objective function would favor it over the error rate of other clas
 
 \begin{table}[!hb]
     \centering
-    % \begin{threeparttable}
-        \caption{
-            Classwise metrics extracted from confusion matrices. 
-            ``Acc.'' is short for accuracy.
-        }
+    \begin{threeparttable}
+        \caption{Classwise metrics extracted from FNN's and DT's confusion matrices.}
         \label{tab:results_fnn_dt}
         \begin{tabular}{c | ccc ccc ccc}
             \toprule
@@ -243,9 +240,9 @@ the proposed objective function would favor it over the error rate of other clas
             & \multicolumn{3}{c}{0 (PD)} 
             & \multicolumn{3}{c}{1 (Healthy)} 
             & \multicolumn{3}{c}{2 (Prodromal)} \\
-            & Acc. & Recall & F1-Score
-            & Acc. & Recall & F1-Score
-            & Acc. & Recall & F1-Score \\
+            & Acc.$^*$ & Recall & F1-Score
+            & Acc.$^*$ & Recall & F1-Score
+            & Acc.$^*$ & Recall & F1-Score \\
             \midrule
             FNN 
             & 84.00\% & 93.75\% & 91.30\%
@@ -257,8 +254,11 @@ the proposed objective function would favor it over the error rate of other clas
             & 0.00\% & 0.00\% & 0.00\% \\
             \bottomrule
         \end{tabular}
-    % \end{threeparttable}
+    \end{threeparttable}
+    \begin{tablenotes}
+        \item $^*$ Accuracy.
+    \end{tablenotes}
 \end{table}
 
 Optuna's optimization results were not discussed here due to being somewhat off-topic.
-For a discussion on Optuna's optimization and its resulting hyperparameters, check the section at the end of this report.
+For a discussion on Optuna's optimization and its resulting hyperparameters, check \cref{sec:optuna}.
