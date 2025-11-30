@@ -14,7 +14,7 @@ and compare its performance with the results obtained in Question 1.
     (such as age, gender, race, etc.) to form the PPMI dataset.
     %
     As a dataset designed for the study of Parkinson Disease (PD) prediction and identification,
-    each patient falls under one of three classes:
+    each patient falls under:
     %
     \begin{multicols}{3}
         \begin{itemize}
@@ -24,7 +24,10 @@ and compare its performance with the results obtained in Question 1.
         \end{itemize}        
     \end{multicols}
 
-    Of the original 56 columns in the CSV of PPMI patient metadata (\texttt{meta\_data11192021.csv}), 
+    Of the original 56 columns in the CSV of PPMI patient metadata (\texttt{meta\_data11192021.csv})%
+    \footnote{
+        See the note on data at the end of this report for a more detailed explanation on the features. 
+    }, 
     4 are diagnostic labels, and 23 were dropped from consideration due to one or more of the following: 
     %
     \begin{enumerate}
@@ -190,9 +193,28 @@ The best DT with smallest validation error, 4.97\%, has the parameters presented
 \clearpage
 \noindent\textbf{Performance comparison.}
 
-For a discussion on Optuna's optimization and its resulting hyperparameters, check the section at the end of this report.
+The low error rates during validation strongly suggest the FNN has compatible complexity with respect to the multiclassification task and hand,
+and that the DT is capable of using only the more impactful features - such as UPDRS scores and age - when diagnosing for PD.
+%
+These models were ran on the test split, resulting in the confusion matrices shown in \cref{fig:confusion_matrices_fnn_dt}
+and metrics listed in \cref{tab:results_fnn_dt}.
+It is fair to affirm that both models had similarly great performance on classfying both healthiness and PD,
+although DT has slightly fewer misclassifications in these cases.
 
-\begin{figure}[!ht]
+With that said, both models showed very poor results with respect to the prodromal classifications, with 0\% accuracy.
+This is, partly, an effect of the optimization objective set during validation:
+since models were being selected on overall error rate, and not classwise error rates,
+the frequency of classes in the split becomes an influential factor on performance.
+In other words, the models tolerate error on prodromal classifications because 
+the number of prodromal patients in small when compared to healthy and PD cases.
+
+Future expansions on this study would consider applying or developing a way to make prodromal samples more influential during validation.
+One way to do this is making the objective function multivariate, e.g., minimizing not the overall classification error rate,
+but a vector of classwise error rates:
+since the error rate on classes with a small amount of samples is sensitive to misclassifications,
+the proposed objective function would favor it over the error rate of other classes.
+
+\begin{figure}[!hb]
     \centering
     \caption{Confusion matrices of best FNN and DT architectures.}
     \label{fig:confusion_matrices_fnn_dt}
@@ -206,3 +228,37 @@ For a discussion on Optuna's optimization and its resulting hyperparameters, che
         \includegraphics[width=.8\linewidth]{../../python_code/plots/dt/confusion_matrix.pdf}
     \end{subfigure}
 \end{figure}
+
+\begin{table}[!hb]
+    \centering
+    % \begin{threeparttable}
+        \caption{
+            Classwise metrics extracted from confusion matrices. 
+            ``Acc.'' is short for accuracy.
+        }
+        \label{tab:results_fnn_dt}
+        \begin{tabular}{c | ccc ccc ccc}
+            \toprule
+            \multirow{2}{*}{Model} 
+            & \multicolumn{3}{c}{0 (PD)} 
+            & \multicolumn{3}{c}{1 (Healthy)} 
+            & \multicolumn{3}{c}{2 (Prodromal)} \\
+            & Acc. & Recall & F1-Score
+            & Acc. & Recall & F1-Score
+            & Acc. & Recall & F1-Score \\
+            \midrule
+            FNN 
+            & 84.00\% & 93.75\% & 91.30\%
+            & 90.82\% & 94.18\% & 95.19\%
+            & 0.00\% & 0.00\% & 0.00\% \\
+            DT 
+            & 90.00\% & 96.43\% & 94.74\%
+            & 95.31\% & 96.83\% & 97.60\%
+            & 0.00\% & 0.00\% & 0.00\% \\
+            \bottomrule
+        \end{tabular}
+    % \end{threeparttable}
+\end{table}
+
+Optuna's optimization results were not discussed here due to being somewhat off-topic.
+For a discussion on Optuna's optimization and its resulting hyperparameters, check the section at the end of this report.

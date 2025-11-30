@@ -66,13 +66,8 @@ def plot_correlations(
     sns.heatmap(samples.corr(), ax=ax, **hmap_kwargs)
     ax.tick_params(axis="x", labelsize=fontsize)
     ax.tick_params(axis="y", labelsize=fontsize)
-    ax.set_xticklabels(
-        ax.get_xticklabels(), rotation=90, ha="right"
-    )  # ha='right' aligns the text correctly
-    ax.set_yticklabels(
-        ax.get_yticklabels(),
-        rotation=0,
-    )  # ha='right' aligns the text correctly
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=90, ha="right")
+    ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
 
     plt.savefig(save_path, bbox_inches="tight", pad_inches=0)
     plt.clf()

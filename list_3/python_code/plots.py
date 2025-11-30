@@ -78,7 +78,6 @@ def plot_confusion_matrix(
     if test_preds.ndim > 1:  # convert one-hot outputs (Keras standard) to integers
         test_preds = test_preds.argmax(axis=1)
 
-    fig, ax = plt.subplots()
     disp = ConfusionMatrixDisplay.from_predictions(
         wrapper.context.y_test, test_preds, cmap=cmap, colorbar=False
     )
@@ -88,7 +87,6 @@ def plot_confusion_matrix(
         bbox_inches="tight",
         pad_inches=0,
     )
-    plt.close()
 
 
 if __name__ == "__main__":
@@ -119,9 +117,9 @@ if __name__ == "__main__":
         print(study.best_value)
 
         plot_confusion_matrix(model, study)
-        # save_optuna_visualizations(model, study)
+        save_optuna_visualizations(model, study)
 
-        # if isinstance(model, FeedForwardNeuralNetworkWrapper):
-        #     plot_best_fnn(model, study)
-        # elif isinstance(model, DecisionTreeWrapper):
-        #     plot_best_dt(model, study)
+        if isinstance(model, FeedForwardNeuralNetworkWrapper):
+            plot_best_fnn(model, study)
+        elif isinstance(model, DecisionTreeWrapper):
+            plot_best_dt(model, study)
