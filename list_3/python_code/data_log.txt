@@ -1,0 +1,92 @@
+[Verbose on] Preparing PPMI dataset...
+=== CORRELATION FILTERING SUMMARY ===
+- Samples: 1209
+- Features: 28
+- Classes: 3
+- Original features: 29
+- Removed features: 1
+- Reduction: 3.45%
+- Removed features:
+	- Neutrophils (%)
+[Verbose on] Pairwise correlations above threshold:
+                  x1               x2      corr
+235  Lymphocytes (%)  Neutrophils (%) -0.952933
+=====================================
+
+=== LABEL SUMMARY ===
+Train Labels:
+	- '0': 183 samples (30.30%)
+	- '1': 416 samples (68.87%)
+	- '2': 5 samples (0.83%)
+Validation Labels:
+	- '0': 100 samples (33.11%)
+	- '1': 200 samples (66.23%)
+	- '2': 2 samples (0.66%)
+Test Labels:
+	- '0': 112 samples (36.96%)
+	- '1': 189 samples (62.38%)
+	- '2': 2 samples (0.66%)
+=====================
+
+[Verbose on] Preparing Parkinson Detection dataset...
+=== CORRELATION FILTERING SUMMARY ===
+- Samples: 195
+- Features: 11
+- Classes: 2
+- Original features: 22
+- Removed features: 11
+- Reduction: 50.00%
+- Removed features:
+	- Jitter:DDP
+	- MDVP:APQ
+	- MDVP:Jitter(Abs)
+	- MDVP:PPQ
+	- MDVP:RAP
+	- MDVP:Shimmer(dB)
+	- NHR
+	- PPE
+	- Shimmer:APQ3
+	- Shimmer:APQ5
+	- Shimmer:DDA
+[Verbose on] Pairwise correlations above threshold:
+                   x1                x2      corr
+60     MDVP:Jitter(%)  MDVP:Jitter(Abs)  0.935714
+61     MDVP:Jitter(%)          MDVP:RAP  0.990276
+62     MDVP:Jitter(%)          MDVP:PPQ  0.974256
+63     MDVP:Jitter(%)        Jitter:DDP  0.990276
+70     MDVP:Jitter(%)               NHR  0.906959
+78   MDVP:Jitter(Abs)          MDVP:RAP  0.922911
+80   MDVP:Jitter(Abs)        Jitter:DDP  0.922913
+95           MDVP:RAP          MDVP:PPQ  0.957317
+96           MDVP:RAP        Jitter:DDP  1.000000
+103          MDVP:RAP               NHR  0.919521
+111          MDVP:PPQ        Jitter:DDP  0.957319
+132        Jitter:DDP               NHR  0.919548
+140      MDVP:Shimmer  MDVP:Shimmer(dB)  0.987258
+141      MDVP:Shimmer      Shimmer:APQ3  0.987625
+142      MDVP:Shimmer      Shimmer:APQ5  0.982835
+143      MDVP:Shimmer          MDVP:APQ  0.950083
+144      MDVP:Shimmer       Shimmer:DDA  0.987626
+153  MDVP:Shimmer(dB)      Shimmer:APQ3  0.963198
+154  MDVP:Shimmer(dB)      Shimmer:APQ5  0.973751
+155  MDVP:Shimmer(dB)          MDVP:APQ  0.960977
+156  MDVP:Shimmer(dB)       Shimmer:DDA  0.963202
+165      Shimmer:APQ3      Shimmer:APQ5  0.960070
+167      Shimmer:APQ3       Shimmer:DDA  1.000000
+176      Shimmer:APQ5          MDVP:APQ  0.949146
+177      Shimmer:APQ5       Shimmer:DDA  0.960072
+227           spread1               PPE  0.962435
+=====================================
+
+=== LABEL SUMMARY ===
+Train Labels:
+	- '0': 27 samples (27.84%)
+	- '1': 70 samples (72.16%)
+Validation Labels:
+	- '0': 9 samples (18.75%)
+	- '1': 39 samples (81.25%)
+Test Labels:
+	- '0': 12 samples (24.00%)
+	- '1': 38 samples (76.00%)
+=====================
+

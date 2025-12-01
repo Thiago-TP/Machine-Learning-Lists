@@ -1,0 +1,136 @@
+\section{Question 3}
+Perform an experiment testing different kernel functions and hyperparameter configurations 
+to obtain the best Support Vector Machine (SVM) classifier for a binary classification task, using a dataset of your choice. 
+Don't forget to discuss the results.
+
+\noindent\rule{\textwidth}{.5pt}
+
+\noindent\textbf{Data description.}
+The dataset chosen is the Oxford Parkinson's Disease Detection Dataset, 
+openly available at \cite{parkinsons_174} (loaded in \texttt{parkinsons.csv}).
+It 
+``{\itshape is composed of a range of biomedical voice measurements from 31 people, 23 with Parkinson's disease (PD). 
+Each column in the table is a particular voice measure, 
+and each row corresponds one of 195 voice recording from these individuals (`name' column). 
+The main aim of the data is to discriminate healthy people from those with PD, 
+according to `status' column which is set to 0 for healthy and 1 for PD}'',
+as quoted directly from the authors.
+
+The relatively low number of samples and high number of features play into the strengths of an SVM classifier.
+As done in the previous questions (see \cref{fig:data_preprocessing}), 
+non-relevant features were dropped (e.g., the name column), 
+highly correlated features were removed (see \cref{fig:correlations_pd}),
+and the remaining samples shuffled before being the train-validation-test split.
+%
+\Cref{tab:data_pd} assesses the size and composition of the resulting splits.
+
+\begin{table}[!hb]
+    \centering
+    \caption{
+        Parkinson Detection dataset splits. 
+        Randomizer seed was fixed at 2421.
+    }
+    \label{tab:data_pd}
+    \begin{tabular}{l rr rr rr}
+        \toprule
+        \multicolumn{1}{c}{\multirow{2}{*}{Class}} & 
+        \multicolumn{6}{c}{Absolute and relative amounts within split} \\ 
+        \cmidrule{2-7}
+        & \multicolumn{2}{c}{Train}
+        & \multicolumn{2}{c}{Validation}
+        & \multicolumn{2}{c}{Test} \\ 
+        \midrule
+        0 (Healthy) & 27 & 27.84\% & 9 & 18.75\% & 12 & 24.00\% \\
+        1 (PD) & 70 & 72.16\% & 39 & 81.25\% & 38 & 76.00\% \\ 
+        \midrule 
+        Samples & 97 & 49.74\% & 48 & 24.62\% & 50 & 25.64\% \\ 
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\begin{figure}[!hb]
+    \centering
+    \caption{
+        Feature correlations found in a subset of Parkinson Detection dataset 
+        (a) before and (b) after removing highly-correlated features.
+    }
+    \label{fig:correlations_pd}
+    \begin{subfigure}{.49\textwidth}
+        \centering
+        \caption{}
+        \includegraphics[width=\linewidth]{../../python_code/plots/original_correlations_parkinsons.pdf}
+    \end{subfigure}
+    \begin{subfigure}{.49\textwidth}
+        \centering
+        \caption{}
+        \includegraphics[width=\linewidth]{../../python_code/plots/filtered_correlations_parkinsons.pdf}
+    \end{subfigure}
+\end{figure}
+
+\newpage
+As done in the previous questions, the Optuna framework was used to find the best hyperparameters
+with respect to overall accuracy on the validation set.
+%
+The search space and best hyperparameters after 100 trails are shown in \cref{tab:hparams_svm};
+the associated model managed to obtain an error rate of 10.42\%.
+The confusion matrix obtained on the test set from this model is shown in \cref{fig:confusion_matrix_svm}.
+\Cref{tab:results_svm} lists some metrics derived from the results in the matrix.
+
+\begin{table}[!h]
+    \centering
+    \begin{threeparttable}
+    \caption{SVM hyperparameters.}
+    \label{tab:hparams_svm}
+    \begin{tabular}{ccc}
+        \toprule
+            Hyperparameter & Search space & Best after 100 trials \\
+        \midrule
+            Kernel & Linear, polynomial, RBF$^*$ or sigmoid & polynomial \\
+            Regularization constant$^{**}$ & $[10^{-1}, 10^3]$ & 2.45\\
+            Degree$^{***}$ & $\{2, 3, 4, 5\}$ & 2 \\ 
+            Linear coefficient$^{***}$ & $[0, 10]$ & 5.85 \\ 
+        \bottomrule
+    \end{tabular}
+    \begin{tablenotes}
+        \item $^*$ Radial Basis Function 
+        \item $^{**}$ Sampled from the log domain
+        \item $^{***}$ Valid only for the polynomial kernel
+    \end{tablenotes}
+\end{threeparttable}
+\end{table}
+
+It is clear that the SVM was a good predictor of PD, 
+but its performance on healthy patients is lacking.
+% 
+As seen previously, this is likely due to the use of an objective function in the validation stage
+that favors classes with greater number of samples.
+
+Changing the objective function to consider each class separately but simulneaously 
+should prove an improvement to this explorative study.
+
+\begin{figure}[!hb]
+    \centering
+    \caption{Confusion matrix of best SVM.}
+    \label{fig:confusion_matrix_svm}
+    \includegraphics[width=0.4\textwidth]{../../python_code/plots/svm/confusion_matrix.pdf}
+\end{figure}
+
+\begin{table}[!hb]
+    \centering
+    \caption{Classwise metrics extracted from SVM's confusion matrix.}
+    \label{tab:results_svm}
+    \begin{tabular}{l | cccc}
+        \toprule
+        \multicolumn{1}{c|}{Class} 
+        & Accuracy & Recall & Precision & F1-Score \\
+        \midrule
+        0 (Healthy) 
+        & 50.00\% & 50.00\% & 100.00\% & 66.67\% \\
+        1 (PD) 
+        & 86.36\% & 100.00\% & 86.36\% & 92.68\% \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Optuna's optimization results for this classifier included commentary on the importance of the kernel.
+To read about it, see \cref{sec:optuna}.

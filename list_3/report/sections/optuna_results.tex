@@ -1,0 +1,157 @@
+\section{Optuna results}
+\label{sec:optuna}
+
+This section presents and discusses 4 of Optuna's visualizations, chosen
+due to their perceived relevance with respect to the work at hand:
+
+\begin{multicols}{2}
+\begin{enumerate}
+    \item Optimization History \\
+    Scatter plot of the objective function value across trials.
+
+    \item Parameter Importances \\
+    Horizontal bar plot of parameter importance.
+    Importance here is understood as the fraction of the objective function reference the parameter explains \cite{pmlr-v32-hutter14}.
+    
+    \item Slice \\
+    Scatter plots the objective function with respect to each parameter separately.
+
+    \item Terminator Improvement \\
+    Objective improvement potentials, 
+    i.e., it estimates how much further the objective could be minimized if the study continued. 
+\end{enumerate}
+\end{multicols}
+
+\subsection{Feedforward Neural Network}
+
+Optuna's visualizations for the FNN are presented in \cref{fig:optuna_fnn}.
+Optimization history and terminator improvement suggest that the study was thorough.
+%
+As the slice plot shows, the number of hidden layers correlated positively with coefficient with error rate;
+this is probably due to the classic bias vs. variance trade-off associated with model complexity.
+The bigger surprise comes from the importance of the hidden layer activation function:
+ReLU dominates the sigmoid in potential to be associated with a good trial. 
+%
+This could be due to the different ranges of each feature, which when to the weights, saturate the sigmoid.
+Batch normalization, for example, could do away with this contrast.
+
+\begin{figure}[!ht]
+    \centering 
+    \caption{
+        Optuna exploration on FNN hyperparameters. 
+        Objective value corresponds to error rate on validation set across all classes.
+    }
+    \label{fig:optuna_fnn}
+    \begin{subfigure}{.32\textwidth}
+        \centering 
+        \caption{}
+        \includegraphics[width=\linewidth]{../../python_code/plots/fnn/optimization_history.pdf}
+    \end{subfigure}
+    %
+    \begin{subfigure}{.32\textwidth}
+        \centering 
+        \caption{}
+        \includegraphics[width=\linewidth]{../../python_code/plots/fnn/param_importances.pdf}
+    \end{subfigure}
+    %
+    \begin{subfigure}{.32\textwidth}
+        \centering 
+        \caption{}
+        \includegraphics[width=\linewidth]{../../python_code/plots/fnn/terminator_improvement.pdf}
+    \end{subfigure}
+    \begin{subfigure}{.7\textwidth}
+        \centering 
+        \caption{}
+        \includegraphics[width=\linewidth]{../../python_code/plots/fnn/slice.pdf}
+    \end{subfigure}
+\end{figure}
+
+\clearpage
+\subsection{Decision Tree}
+
+Optuna's visualizations for the DT are presented in \cref{fig:optuna_dt}.
+Optimization history and terminator improvement suggest that the study was thorough,
+but it is surprising that the importance of the tree's depth is smaller that the tree's criterion.
+%
+The slice plots suggest that, given a criterion, the tree's error rate will be smaller the shallower its depth:
+there is a positive correlation between the error rate and model complexity in the max depth slice plot,
+which most likely indicates the classic bias vs. variance trade-off of a model. 
+
+
+\begin{figure}[!ht]
+    \centering 
+    \caption{
+        Optuna exploration on DT hyperparameters. 
+        Objective value corresponds to error rate on validation set across all classes.
+    }
+    \label{fig:optuna_dt}
+    \begin{subfigure}{.49\textwidth}
+        \centering 
+        \caption{}
+        \includegraphics[width=\linewidth]{../../python_code/plots/dt/optimization_history.pdf}
+    \end{subfigure}
+    %
+    \begin{subfigure}{.49\textwidth}
+        \centering 
+        \caption{}
+        \includegraphics[width=\linewidth]{../../python_code/plots/dt/param_importances.pdf}
+    \end{subfigure}
+    %
+    \begin{subfigure}{.49\textwidth}
+        \centering 
+        \caption{}
+        \includegraphics[width=\linewidth]{../../python_code/plots/dt/slice.pdf}
+    \end{subfigure}
+    \begin{subfigure}{.49\textwidth}
+        \centering 
+        \caption{}
+        \includegraphics[width=\linewidth]{../../python_code/plots/dt/terminator_improvement.pdf}
+    \end{subfigure}
+\end{figure}
+
+\clearpage
+\subsection{Support Vector Machine}
+
+Optuna's visualizations for the SVM are presented in \cref{fig:optuna_svm}.
+Optimization history and terminator improvement suggest that the study was thorough,
+but it is surprising that the regularization constant's importance is greater than the kernel's.
+%
+The slice plots show that, indeed, the error rate is more sensitive to changes in the constant than the kernel.
+%
+They also show that the linear kernel also achieved 0 error rate for at least one trial (notedly, with a high regularization constant), 
+while the RBF and sigmoid kernels yelded relatively high errors.
+%
+This indicates that, in principle, the vector space that best separates the samples is not complicated. 
+The ease of class separation should explain, at least partially, why changes in kernel 
+don't affect the objective function as much as changes in the regularization constant.
+
+\begin{figure}[!ht]
+    \centering 
+    \caption{
+        Optuna exploration on SVM hyperparameters. 
+        Objective value corresponds to error rate on validation set across all classes.
+    }
+    \label{fig:optuna_svm}
+    \begin{subfigure}{.32\textwidth}
+        \centering 
+        \caption{}
+        \includegraphics[width=\linewidth]{../../python_code/plots/svm/optimization_history.pdf}
+    \end{subfigure}
+    %
+    \begin{subfigure}{.32\textwidth}
+        \centering 
+        \caption{}
+        \includegraphics[width=\linewidth]{../../python_code/plots/svm/param_importances.pdf}
+    \end{subfigure}
+    %
+    \begin{subfigure}{.32\textwidth}
+        \centering 
+        \caption{}
+        \includegraphics[width=\linewidth]{../../python_code/plots/svm/terminator_improvement.pdf}
+    \end{subfigure}
+    \begin{subfigure}{\textwidth}
+        \centering 
+        \caption{}
+        \includegraphics[width=.7\linewidth]{../../python_code/plots/svm/slice.pdf}
+    \end{subfigure}
+\end{figure}

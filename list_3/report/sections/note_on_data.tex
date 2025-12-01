@@ -1,0 +1,215 @@
+\section{Note on data}
+\label{sec:data}
+
+\subsection{PPMI features}
+ This subsection lists all features found in the PPMI dataset downloaded.
+ \cref{tab:features_ppmi} describes each feature while also including their value range
+ and whether they were considered for entering the train-validation-test split.
+ Note that, to the best of the author's knowledge, 
+ there is not an official source explaining the dataset,
+ and so the information presented must be taken with a grain of salt.
+ For more details on the PPMI dataset, see \cite{Craig2021, Kern2021}.
+
+ \begin{table}[!ht]
+    \centering 
+    \begin{threeparttable}
+    \caption{PPMI features and their meanings.}
+    \label{tab:features_ppmi}
+    \begin{tabular}{c | c p{3.5cm} p{3.5cm} c}
+        \toprule
+        Name & Type & Value & Description & Considered \\ 
+        \midrule
+        \texttt{HudAlphaSample} 
+            & identifier & 5104-SL-XXXX, with XXXX a 4-digit number & sample unique identifier & no \\ 
+        \texttt{Small RNA-Seq} 
+            & categorical & ``Yes'' or ``No'' & whether sample contained scRNA & no \\ 
+        \texttt{Long RNA-seq} 
+            & categorical & ``Yes'' or ``No'' & whether sample contained lncRNA & no \\ 
+        \texttt{PATNO} 
+            & identifier & PP-Y, with Y a 4 or 5-digit number & patient identifier & no \\ 
+        \texttt{PATNO Visit} 
+            & identifier & Y\_CE, where Y is the number from \texttt{PATNO} 
+              and CE the \texttt{Clinical Event} 
+            & patient visit identifier & no \\ 
+        \texttt{QC} 
+            & categorical & ``HighQC'' or ``LowQC'' & patient's quality of care & no$^1$ \\ 
+        \texttt{PoolAssign} 
+            & categorical & ``Sample'' or ``POOL'' & whether sample comes from a patient & no$^2$ \\ 
+        \texttt{Phase} 
+            & categorical & ``phase1'' or ``phase2'' & from which batch the sample comes from & no \\ 
+        \texttt{Disease Status} 
+            & diagnostic 
+            & ``Idiopathic PD'', ``Healthy Control'', ``Genetic PD'', 
+            ``Genetic Unaffected'', ``Prodromal'', or ``SWEDD''$^3$
+            & patient diagnosis & no \\ 
+        \texttt{Study Arm} 
+            & diagnostic 
+            & ``PD'', ``HC'', ``GENPD'',  ``GENUN'', 
+              ``REGPD'', ``PRODROMA'' or ``SWEDD'' 
+            & patient diagnosis & no \\ 
+        \bottomrule 
+    \end{tabular}
+    %
+    \begin{tablenotes}
+        \item $^1$ Inclusion of QC made correlation calculation unstable.
+        \item $^2$ 
+            When a sample is POOL, all feature values become POOL.
+            Data in the splits considered only patient samples.
+        \item $^3$ Scans Without Evidence of Dopaminergic Deficit.
+    \end{tablenotes}   
+    \end{threeparttable}
+\end{table}
+
+\clearpage
+\begin{table}[!ht]
+    \centering 
+    \begin{threeparttable}
+    \caption{PPMI features and their meanings (continuation).}
+    \begin{tabular}{c | c p{3.5cm} p{3cm} c}
+        \toprule
+        Name & Type & Value & Description & Considered \\ 
+        \midrule
+        \texttt{Genetic Status} 
+            & categorical & ``LRRK2-/SNCA-/GBA-'', ``LRRK2+'' or ``GBA+'' & mutation status of key PD-related genes & yes \\ 
+        \texttt{Diagnosis} 
+            & diagnostic 
+            & ``PD'', ``Control'', ``Genetic Cohort'', 
+              ``Generic Registry'', ``Prodromal'', ``SWEDD'' 
+            & patient diagnosis & no \\ 
+        \texttt{Case Control} 
+            & diagnosis & ``PD'', ``Control'', ``Other'' & whether patient is healthy, has PD, or is likely to have PD & yes \\ 
+        \texttt{Clinical Event} 
+            & categorical & ``BL'' or ``VZZ'', with ZZ a 2-digit number & patient visit identifier & no \\ 
+        \texttt{Month} 
+            & categorical & ``MW'', with W a 1 or 2-digit number & month of the patient's visit & no \\ 
+        \texttt{Sex} 
+            & categorical & ``Female'' or ``Male'' & patient's sex & yes \\ 
+        \texttt{Ethnicity} 
+            & categorical & ``Not Hispanic or Latino'' or ``Hispanic or Latino'' & patient ethnicity & yes \\ 
+        \texttt{Race} 
+            & categorical 
+            & ``White'', ``Black or African American'', ``Multiracial'', 
+              ``Asian'', ``Unknown'', ``American Indian or Alaska Native'', ``Other'' 
+            & patient's race & yes \\ 
+        \texttt{Education Level} 
+            & categorical & ``12-16 years'', ``Greater than 16 years'', ``Less than 12 years'' & patient's education level & yes \\ 
+        \texttt{Age (Bin)}
+            & categorical & ``under\_55'', ``over\_65'', ``55\_to\_65'' & range within the patient's age is & no \\
+        \texttt{Age at Consent}
+            & floating point & positive decimal number & patient's age at consent to participate & yes \\
+        \texttt{Age at diagnosis}
+            & integer & positive integer & patient's age at diagnosis & no \\
+        \texttt{RIN Value}
+            & floating point & $[1, 10]$ & RNA integrity number & yes \\
+        \texttt{Box}
+            & categorical 
+            & ``AAAAA-J\_RNA\_B'' or ``J\_RNA\_B'' or ``B'', 
+              with AAAAA a 5-digit number and B a 1 or 2-digit number 
+            & sample's box & no \\
+        \texttt{Position} 
+            & integer & positive integer & sample's position within plate & no \\ 
+        \texttt{Plate} 
+            & categorical & ``pN'', with N a positive integer & sample's plate's identifier & no \\ 
+        \bottomrule 
+    \end{tabular}
+    \end{threeparttable}
+\end{table}
+
+\clearpage
+\begin{table}[!ht]
+    \centering 
+    \begin{threeparttable}
+    \caption{PPMI features and their meanings (continuation).}
+    \begin{tabular}{c | c p{3cm} p{4cm} c}
+        \toprule
+        Name & Type & Value & Description & Considered \\ 
+        \midrule
+        \texttt{Neutrophil Score} 
+            & floating point & positive decimal number & absolute neutrophil count divided by 10 & yes \\ 
+        \texttt{Basophils (\%)} 
+            & floating point & $[0, 100]$ & basophil level in blood & yes \\ 
+        \texttt{Eosinophils (\%)} 
+            & floating point & $[0, 100]$ & eosinophil level in blood & yes \\ 
+        \texttt{Lymphocytes (\%)} 
+            & floating point & $[0, 100]$ & lymphocyte level in blood & yes \\ 
+        \texttt{Neutrophils (\%)} 
+            & floating point & $[0, 100]$ & neutrophil level in blood & yes$^4$ \\ 
+        \texttt{Neutrophil/Lymphocyte} 
+            & floating point & positive decimal number & neutrophil-to-lymphocyte ratio & yes \\ 
+        \texttt{RBC Morphology} 
+            & categorical & ``Normocytic'' or ``No Review Requ'' & - & no \\ 
+        \texttt{PC1} 
+            & floating point & decimal number & RNA sequencing PCA's 1st value & yes \\
+        \texttt{PC2} 
+            & floating point & decimal number & RNA sequencing PCA's 2nd value & yes \\
+        \texttt{PC3} 
+            & floating point & decimal number & RNA sequencing PCA's 3rd value & yes \\
+        \texttt{PC4} 
+            & floating point & decimal number & RNA sequencing PCA's 4th value & yes \\
+        \texttt{PC5} 
+            & floating point & decimal number & RNA sequencing PCA's 5th value & yes \\
+        \texttt{PC6} 
+            & floating point & decimal number & RNA sequencing PCA's 6th value & yes \\
+        \texttt{PC7} 
+            & floating point & decimal number & RNA sequencing PCA's 7th value & yes \\
+        \texttt{PC8} 
+            & floating point & decimal number & RNA sequencing PCA's 8th value & yes \\ 
+        \texttt{PC9} 
+            & floating point & decimal number & RNA sequencing PCA's 9th value & yes \\ 
+        \texttt{mRNA (\%)}
+            & floating point & $[0, 100]$ & percentage of mRNA analyzed & yes \\
+        \texttt{Usable Bases (\%)}
+            & floating point & $[0, 100]$ & fraction of coding and untranslated region bases compared to all bases
+sequenced & no \\
+        \texttt{globin (\%)}
+            & floating point & $[0, 100]$ & globin reduction rate & yes \\
+        \texttt{rRNA (\%)}
+            & floating point & $[0, 100]$ & percentage of rRNA analyzed & yes \\
+        \texttt{Multimapped (\%)}
+            & floating point & $[0, 100]$ & - & no \\
+        \texttt{Uniquely mapped (\%)}
+            & floating point & $[0, 100]$ & - & no \\
+        \texttt{Total reads}
+            & integer & positive integer & amount of sequencing reads & no \\
+        \bottomrule 
+    \end{tabular}
+    \begin{tablenotes}
+        \item $^4$ filtered due to high correlation with Lymphocytes (\%).
+    \end{tablenotes}
+    \end{threeparttable}
+\end{table}
+
+\clearpage
+\begin{table}[!ht]
+    \centering 
+    \begin{threeparttable}
+    \caption{PPMI features and their meanings (continuation).}
+    \begin{tabular}{c | c p{3cm} p{4cm} c}
+        \toprule
+        Name & Type & Value & Description & Considered \\ 
+        \midrule
+        \texttt{UPDRS1 score} 
+            & integer & non-negative integer & MDS-UPDRS$^5$ I score & yes \\ 
+        \texttt{UPDRS2 score} 
+            & integer & non-negative integer & MDS-UPDRS II score & yes \\ 
+        \texttt{UPDRS3 score} 
+            & integer & non-negative integer & MDS-UPDRS III score & yes \\ 
+        \texttt{UPDRS4 score} 
+            & integer & non-negative integer & MDS-UPDRS IV score & no$^6$ \\ 
+        \texttt{UPDRS totscore} 
+            & integer & non-negative integer & total MDS-UPDRS score & no$^7$ \\ 
+        \texttt{UPSIT} 
+            & integer & non-negative integer & UPSIT score & no$^6$ \\ 
+        \texttt{moca} 
+            & integer & $\{0, 1, \dots, 30\}$ & MoCA$^8$ test score & yes \\ 
+        \bottomrule 
+    \end{tabular}
+    \begin{tablenotes}
+        \item $^5$ \href{https://www.movementdisorders.org/MDS/MDS-Rating-Scales/MDS-Unified-Parkinsons-Disease-Rating-Scale-MDS-UPDRS.htm}
+        {MDS-Unified Parkinson's Disease Rating Scale}.
+        \item $^6$ too few samples.
+        \item $^7$ mostly equal to the sum of UPDRS I through III.
+        \item $^8$ \href{https://mocacognition.com/}{Montreal Cognitive Assessment}.
+    \end{tablenotes}
+    \end{threeparttable}
+\end{table}
