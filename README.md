@@ -26,6 +26,7 @@ Third assignment on classification methods. Features Python implementations of v
 
 ### 2.4 `professors_code/`
 Reference implementations provided by instructors, including MATLAB examples for K-means, PCA, and logistic regression.
+All rights related to these scripts go to their author, Dr. Prof. Daniel Guerreiro Guerreiro e Silva at University of Brasília, Brazil.
 
 ## 3 Common Structure (list_1, list_2, list_3)
 
@@ -55,7 +56,7 @@ To generate the PDFs for the reports in each list, follow these steps:
 
 2. **Compile the LaTeX files** using the following command:
     ```bash
-    pdflatex report.tex
+    pdflatex report
     ```
     You may need to run this command multiple times to resolve references and citations.
 
