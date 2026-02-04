@@ -19,4 +19,4 @@ The structure of this list is as follows:
     - `question_5.ipynb`: Jupyter notebook with legacy analysis.
     
 > [!NOTE]
-> The `report` directory and `questions.pdf` have already been addressed in this project's [main README.md](./../README.md).
+> Directory `report` and file `questions.pdf` have already been addressed in this project's [main README.md](./../README.md).

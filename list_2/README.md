@@ -26,4 +26,4 @@ The structure of this list is as follows:
     - `pca/`: Contains images and plots related to Principal Component Analysis.
 
 > [!NOTE]
-> The `report` directory and `questions.pdf` have already been addressed in this project's [main README.md](./../README.md).
+> Directory `report` and file `questions.pdf` have already been addressed in this project's [main README.md](./../README.md).

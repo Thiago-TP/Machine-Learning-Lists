@@ -38,4 +38,4 @@ The structure of this list is as follows:
         - `question_1.tex` through `question_3.tex`: Analysis sections.
             
 > [!NOTE]
-> The `report` directory and `questions.pdf` have already been addressed in this project's [main README.md](./../README.md).
+> Directory `report` and file `questions.pdf` have already been addressed in this project's [main README.md](./../README.md).

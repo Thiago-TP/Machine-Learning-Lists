@@ -6,7 +6,7 @@ This repository contains solutions to three machine learning programming assignm
 ## 1 Repository Structure
 
 ```
-Machine-Learning-Lists/
+machine-learning-lists/
 ├── list_1/
 ├── list_2/
 ├── list_3/
